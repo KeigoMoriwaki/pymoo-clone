@@ -8,8 +8,9 @@ Created on Sat May 25 10:33:59 2024
 from problem import ResourceConstrainedSchedulingProblem
 from data import make_1r, make_2r
 from optimization import solve_problem
+from plot import plot_timeline
 
-def main():
+if __name__ == "__main__":
     # モデル1を作成
     J1, P1, R1, T1, p1, c1, a1, RUB1 = make_1r()
     problem1 = ResourceConstrainedSchedulingProblem(J1, P1, R1, T1, p1, c1, a1, RUB1)
@@ -33,5 +34,6 @@ def main():
     print('Best solution found: \nX = \n', result2.X)
     print('Function value: \nF = \n', result2.F)
 
-if __name__ == "__main__":
-    main()
+    # タイムラインプロットを表示
+    plot_timeline(J1, T1, result1, p1)
+    plot_timeline(J2, T2, result2, p2)
