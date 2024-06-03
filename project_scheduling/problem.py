@@ -23,10 +23,16 @@ class ResourceConstrainedSchedulingProblem(Problem):
         self.tasks = tasks
         self.travel_time = travel_time
         n_var = len(J) * T
-        super().__init__(n_var=n_var, n_obj=1, n_constr=len(P) + len(R) * T, xl=0, xu=len(R), type_var=int)
+        super().__init__(n_var=n_var,
+                         n_obj=1,
+                         n_constr=len(P) + len(R) * T,
+                         xl=0,
+                         xu=len(R),
+                         type_var=int)
 
     def _evaluate(self, x, out, *args, **kwargs):
         J, P, R, T, p, c, a, RUB, locations, tasks, travel_time = self.J, self.P, self.R, self.T, self.p, self.c, self.a, self.RUB, self.locations, self.tasks, self.travel_time
+        
         x = x.reshape((x.shape[0], len(J), T))
         
         start_times = np.array([[np.argmax(xi[j] > 0) for j in range(len(J))] for xi in x])
