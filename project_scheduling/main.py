@@ -12,12 +12,12 @@ from plot import plot_timeline
 
 if __name__ == "__main__":
     # モデル1を作成
-    J1, P1, R1, T1, p1, c1, a1, RUB1 = make_1r()
-    problem1 = ResourceConstrainedSchedulingProblem(J1, P1, R1, T1, p1, c1, a1, RUB1)
+    J1, P1, R1, T1, p1, c1, a1, RUB1, locations1, tasks1, travel_time1 = make_1r()
+    problem1 = ResourceConstrainedSchedulingProblem(J1, P1, R1, T1, p1, c1, a1, RUB1, locations1, tasks1, travel_time1)
 
     # モデル2を作成
-    J2, P2, R2, T2, p2, c2, a2, RUB2 = make_2r()
-    problem2 = ResourceConstrainedSchedulingProblem(J2, P2, R2, T2, p2, c2, a2, RUB2)
+    J2, P2, R2, T2, p2, c2, a2, RUB2, locations2, tasks2, travel_time2 = make_2r()
+    problem2 = ResourceConstrainedSchedulingProblem(J2, P2, R2, T2, p2, c2, a2, RUB2, locations2, tasks2, travel_time2)
 
     # 遺伝的アルゴリズムを使用してモデル1を解く
     result1 = solve_problem(problem1)
@@ -35,5 +35,5 @@ if __name__ == "__main__":
     print('Function value: \nF = \n', result2.F)
 
     # タイムラインプロットを表示
-    plot_timeline(J1, T1, result1, p1)
-    plot_timeline(J2, T2, result2, p2)
+    plot_timeline(J1, T1, result1, p1, locations1)
+    plot_timeline(J2, T2, result2, p2, locations2)

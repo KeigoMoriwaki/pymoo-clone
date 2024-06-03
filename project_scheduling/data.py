@@ -23,7 +23,16 @@ def make_1r():
         (4, 1, 1): 2,
     }
     RUB = {(1, t): 2 for t in range(1, T + 1)}
-    return (J, P, R, T, p, c, a, RUB)
+
+    locations = {1: 'A', 2: 'B', 3: 'C', 4: 'A'}
+    tasks = {1: 'X', 2: 'Y', 3: 'X', 4: 'Y'}
+    travel_time = {
+        'A': {'A': 0, 'B': 2, 'C': 4},
+        'B': {'A': 2, 'B': 0, 'C': 3},
+        'C': {'A': 4, 'B': 3, 'C': 0}
+    }
+
+    return (J, P, R, T, p, c, a, RUB, locations, tasks, travel_time)
 
 def make_2r():
     J = [1, 2, 3, 4, 5]
@@ -39,4 +48,13 @@ def make_2r():
         (4, 2, 0): 1, (4, 2, 1): 2, (5, 2, 0): 1, (5, 2, 1): 2, (5, 2, 2): 1, (5, 2, 3): 1, (5, 2, 4): 1
     }
     RUB = {(r, t): 2 for r in R for t in range(1, T + 1)}
-    return (J, P, R, T, p, c, a, RUB)
+
+    locations = {1: 'A', 2: 'B', 3: 'C', 4: 'A', 5: 'B'}
+    tasks = {1: 'X', 2: 'Y', 3: 'X', 4: 'Y', 5: 'X'}
+    travel_time = {
+        'A': {'A': 0, 'B': 2, 'C': 4},
+        'B': {'A': 2, 'B': 0, 'C': 3},
+        'C': {'A': 4, 'B': 3, 'C': 0}
+    }
+
+    return (J, P, R, T, p, c, a, RUB, locations, tasks, travel_time)

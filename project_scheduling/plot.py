@@ -9,41 +9,19 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-def plot_timeline(J, T, result, p):
+def plot_timeline(J, T, result, p, locations):
     x = result.X.reshape(len(J), T)
-    fig, ax = plt.subplots(figsize=(12, 8))
-
-    task_data = []
+    fig, ax = plt.subplots()
 
     for j in range(len(J)):
-        for t in range(T):
-            if x[j, t] > 0:
-                robot = int(x[j, t])
-                start = t
-                finish = t + p[J[j]]
-                task_data.append((start, finish, f'Task {J[j]}', f'R{robot}'))
-                break
+        task_start = np.argmax(x[j])
+        task_end = task_start + p[j+1]
+        robot = np.max(x[j])
+        ax.barh(y=j, width=task_end-task_start, left=task_start, color='orange', edgecolor='black')
+        ax.text((task_start + task_end) / 2, j, f'R{int(robot)}', ha='center', va='center')
 
-    # Convert task data to DataFrame for easier plotting
-    df = pd.DataFrame(task_data, columns=['Start', 'Finish', 'Task', 'Robot'])
-
-    for i, row in df.iterrows():
-        ax.broken_barh([(row['Start'], row['Finish'] - row['Start'])], (i - 0.4, 0.8),
-                       facecolors=f'tab:orange', edgecolors='black')
-        ax.text((row['Start'] + row['Finish']) / 2, i, row['Robot'], va='center', ha='center', color='black', fontsize=12)
-
-    ax.set_yticks(np.arange(len(df)))
-    ax.set_yticklabels(df['Task'])
-    ax.set_xticks(np.arange(T + 1))
-    ax.set_xlabel('Time Period')
+    ax.set_yticks(range(len(J)))
+    ax.set_yticklabels([f'Task {j+1} ({locations[j+1]})' for j in range(len(J))])
+    ax.set_xlabel('Time')
     ax.set_ylabel('Tasks')
-    ax.grid(True)
-
-    # Add timeline markers for better visualization
-    for i, row in df.iterrows():
-        ax.plot([row['Start'], row['Finish']], [i, i], color='tab:orange', marker='|')
-        ax.text(row['Start'], i + 0.2, f'Start: {row["Start"]}', ha='center', fontsize=8, color='blue')
-        ax.text(row['Finish'], i - 0.2, f'Finish: {row["Finish"]}', ha='center', fontsize=8, color='red')
-
-    plt.title('Task Scheduling Timeline')
     plt.show()
