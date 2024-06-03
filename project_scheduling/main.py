@@ -9,6 +9,7 @@ from problem import ResourceConstrainedSchedulingProblem
 from data import make_1r, make_2r
 from optimization import solve_problem
 from plot import plot_timeline
+from robot import Robot, calculate_travel_times
 
 if __name__ == "__main__":
     # モデル1を作成
