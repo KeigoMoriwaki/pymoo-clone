@@ -15,9 +15,9 @@ class Robot:
         travel_duration = travel_time[self.current_location][new_location]
         self.current_location = new_location
         return travel_duration
-    
-def calculate_travel_times(start_locations, end_locations, travel_time):
-    times = []
-    for start, end in zip(start_locations, end_locations):
-        times.append(travel_time[start][end])
-    return times
+
+def calculate_travel_times(robots, jobs, travel_time_matrix):
+    for robot in robots:
+        for job in jobs:
+            travel_time = robot.move_to(job.location, travel_time_matrix)
+            print(f"Robot {robot.id} moves to {job.location} for job {job.id} taking {travel_time} time units")

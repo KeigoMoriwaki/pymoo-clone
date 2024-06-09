@@ -9,6 +9,6 @@ from pymoo.algorithms.soo.nonconvex.ga import GA
 from pymoo.optimize import minimize
 
 def solve_problem(problem):
-    algorithm = GA(pop_size=200)
-    res = minimize(problem, algorithm, ('n_gen', 200), verbose=True)
-    return res
+    algorithm = GA(pop_size=100, eliminate_duplicates=True)
+    result = minimize(problem, algorithm, ('n_gen', 200), verbose=True)
+    return result
