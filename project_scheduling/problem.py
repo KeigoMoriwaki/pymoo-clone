@@ -35,15 +35,15 @@ class ResourceConstrainedSchedulingProblem(Problem):
         
         x = x.reshape((x.shape[0], len(J), T))
         
-        start_times = np.array([[np.argmax(xi[j] > 0) for j in range(len(J))] for xi in x])
-        finish_times = start_times + np.array([p[j+1] for j in range(len(J))])
+        total_work = np.array([[np.sum(xi[j] > 0) for j in range(len(J))] for xi in x])
+        finish_times = np.ceil(total_work / np.array([p[j+1] for j in range(len(J))])).astype(int)
         
-        total_cost = np.array([np.max(finish_times[i]) + 0.1 * np.sum(finish_times[i]) for i in range(x.shape[0])])
+        total_cost = np.array([np.max(finish_times[i]) for i in range(x.shape[0])])
         
         constraints = []
         
         for i in range(x.shape[0]):
-            precedence_constraints = [start_times[i, k-1] - finish_times[i, j-1] for (j, k) in P]
+            precedence_constraints = [np.sum(x[i, k-1]) - np.sum(x[i, j-1]) for (j, k) in P]
             constraints.append(precedence_constraints)
         
         for t in range(T):
@@ -52,6 +52,18 @@ class ResourceConstrainedSchedulingProblem(Problem):
                 constraints.append(resource_constraints)
         
         constraints = np.hstack(constraints)
+        
+        # ロボットの移動時間を考慮した制約を追加
+        for i in range(x.shape[0]):  # 各サンプルについて
+            for t in range(T):
+                for r in range(1, len(R) + 1):
+                    for j in range(len(J)):
+                        if x[i, j, t] == r:
+                            previous_location = locations[j]
+                            current_location = locations[j]
+                            travel_duration = travel_time[previous_location][current_location]
+                            if t + travel_duration < T:
+                                constraints = np.append(constraints, x[i, j, t + travel_duration] != r)
         
         out["F"] = total_cost
         out["G"] = constraints
