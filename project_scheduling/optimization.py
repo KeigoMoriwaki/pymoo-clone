@@ -10,7 +10,7 @@ from pymoo.optimize import minimize
 from problem import ResourceConstrainedSchedulingProblem
 from data import make_1r, make_2r
 
-def optimize_problem(problem_data):
+def solve_problem(problem_data):
     J, P, R, T, p, c, a, RUB, locations, tasks, travel_time = problem_data
     problem = ResourceConstrainedSchedulingProblem(J, P, R, T, p, c, a, RUB, locations, tasks, travel_time)
     
