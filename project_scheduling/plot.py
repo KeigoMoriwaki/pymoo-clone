@@ -8,7 +8,7 @@ Created on Thu May 30 20:02:17 2024
 import matplotlib.pyplot as plt
 import numpy as np
 
-def plot_schedule(result, J, R, T):
+def plot_schedule(result, J, R, T, p, c, a, RUB, locations, tasks, travel_time):
     schedule = result.X.reshape((len(J), T))
     
     fig, ax = plt.subplots(figsize=(12, 6))

@@ -33,7 +33,9 @@ def make_1r():
         'C': {'A': 4, 'B': 3, 'C': 0}
     }
     
-    return (J, P, R, T, p, c, a, RUB, locations, tasks, travel_time)
+    robot_initial_locations = {r: 'A' for r in R}
+    
+    return (J, P, R, T, p, c, a, RUB, locations, tasks, travel_time, robot_initial_locations)
 
 def make_2r():
     J = [1, 2, 3, 4, 5]
@@ -59,4 +61,6 @@ def make_2r():
         'C': {'A': 4, 'B': 3, 'C': 0}
     }
     
-    return (J, P, R, T, p, c, a, RUB, locations, tasks, travel_time)
+    robot_initial_locations = {r: 'A' for r in R}
+    
+    return (J, P, R, T, p, c, a, RUB, locations, tasks, travel_time, robot_initial_locations)

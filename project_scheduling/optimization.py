@@ -11,8 +11,8 @@ from problem import ResourceConstrainedSchedulingProblem
 from data import make_1r, make_2r
 
 def solve_problem(problem_data):
-    J, P, R, T, p, c, a, RUB, locations, tasks, travel_time = problem_data
-    problem = ResourceConstrainedSchedulingProblem(J, P, R, T, p, c, a, RUB, locations, tasks, travel_time)
+    J, P, R, T, p, c, a, RUB, locations, tasks, travel_time, robot_initial_locations = problem_data
+    problem = ResourceConstrainedSchedulingProblem(J, P, R, T, p, c, a, RUB, locations, tasks, travel_time, robot_initial_locations)
     
     algorithm = GA(pop_size=100, eliminate_duplicates=True)
     result = minimize(problem, algorithm, ('n_gen', 200), verbose=True)
