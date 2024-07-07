@@ -6,64 +6,61 @@ Created on Sat May 25 10:32:04 2024
 """
 
 import numpy as np
+import copy
 from pymoo.core.problem import Problem
 
 class ResourceConstrainedSchedulingProblem(Problem):
+    # Parameters:
+    #     - J: set of jobs
+    #     - P: set of precedence constraints between jobs
+    #     - R: set of resources
+    #     - T: number of periods
+    #     - p[j]: processing time of job j
+    #     - a[j,r,t]: resource r usage for job j on period t (after job starts)
+    #     - RUB[r,t]: upper bound for resource r on period t
 
-    def __init__(self, J, P, R, T, p, c, a, RUB, locations, tasks, travel_time):
-        self.J = J
-        self.P = P
-        self.R = R
-        self.T = T
-        self.p = p
-        self.c = c
-        self.a = a
-        self.RUB = RUB
-        self.locations = locations
-        self.tasks = tasks
-        self.travel_time = travel_time
-        n_var = len(J) * T
+    def __init__(self, problem_data):
+        self.J, self.P, self.R, self.T, self.p, self.RUB = problem_data
+        n_var = len(self.J) * self.T
         super().__init__(n_var=n_var,
                          n_obj=1,
-                         n_constr=len(P) + len(R) * T,
+                         n_constr=1,
                          xl=0,
-                         xu=len(R),
+                         xu=len(self.R),
                          type_var=int)
 
     def _evaluate(self, x, out, *args, **kwargs):
-        J, P, R, T, p, c, a, RUB, locations, tasks, travel_time = self.J, self.P, self.R, self.T, self.p, self.c, self.a, self.RUB, self.locations, self.tasks, self.travel_time
-        
-        x = x.reshape((x.shape[0], len(J), T))
-        
-        total_work = np.array([[np.sum(xi[j] > 0) for j in range(len(J))] for xi in x])
-        finish_times = np.ceil(total_work / np.array([p[j+1] for j in range(len(J))])).astype(int)
-        
-        total_cost = np.array([np.max(finish_times[i]) for i in range(x.shape[0])])
-        
+        finish_times = []
         constraints = []
+
+        for ind in x:
+            schedule = ind.reshape((len(self.J), self.T))
+            leftover = copy.deepcopy(self.p)
+            t = 0
         
-        for i in range(x.shape[0]):
-            precedence_constraints = [np.sum(x[i, k-1]) - np.sum(x[i, j-1]) for (j, k) in P]
-            constraints.append(precedence_constraints)
-        
-        for t in range(T):
-            for r in range(1, len(R) + 1):
-                resource_constraints = [np.sum([xi[j, t] == r for j in range(len(J))]) - 1 for xi in x]
-                constraints.append(resource_constraints)
-        
-        constraints = np.hstack(constraints)
-        
-        # ロボットの移動時間を考慮した制約を追加
-        for i in range(x.shape[0]):  # 各サンプルについて
-            for t in range(T):
-                for r in range(1, len(R) + 1):
-                    for j in range(len(J)):
-                        if x[i, j, t] == r:
-                            previous_location = locations[j]
-                            current_location = locations[j]
-                            travel_duration = travel_time[previous_location][current_location]
-                            if t + travel_duration < T:
-                                constraints = np.append(constraints, x[i, j, t + travel_duration] != r)
-        
-        out["F"] = total_cost
-        out["G"] = constraints
+            for t, s in enumerate(schedule.T):
+                for i, j in enumerate(s):
+                    if j != 0:
+                        leftover[i + 1] = max(0, leftover[i + 1] - 1)
+                if sum(leftover.values()) == 0:
+                    break
+            finish_times.append(t + 1)  # タスクが終了した時刻を記録
+
+            resource_constraints = []
+            for t, s in enumerate(schedule.T):
+                n_worker = np.zeros(len(self.R))
+                for i, j in enumerate(s):
+                    if j != 0:
+                        n_worker[j-1] += 1
+                for r in range(len(self.R)):
+                    if self.RUB[(r+1, t+1)] - n_worker[r] < 0:
+                        resource_constraints.append(self.RUB[(r+1, t+1)] - n_worker[r])
+            if len(resource_constraints) == 0:
+                resource_constraints.append(0)
+            constraints.append(sum(resource_constraints))
+    
+        out["F"] = np.array(finish_times).reshape(-1, 1)  # 正しい形状に変換
+        out["G"] = np.array(constraints).reshape(-1, 1)  # 正しい形状に変換
+
+
+
