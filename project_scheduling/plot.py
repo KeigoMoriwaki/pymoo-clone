@@ -8,22 +8,28 @@ Created on Thu May 30 20:02:17 2024
 import matplotlib.pyplot as plt
 import numpy as np
 
-def plot_schedule(result, J, R, T):
-    schedule = result.X.reshape((len(J), T))
+def plot_schedule(result, problem_data):
+    J, P, R, T, p, RUB, backup_robots = problem_data
 
-    fig, ax = plt.subplots(figsize=(12, 6))
-    colors = plt.cm.get_cmap('tab10', len(J))
+    # 最適化結果からスケジュールを取得
+    expected_shape = (len(J) * T,)
+    if result.X.shape == expected_shape:  # 形状が期待通りの場合
+        best_schedule = result.X.reshape((len(J), T))
+    else:
+        raise ValueError(f"Unexpected result.X shape: {result.X.shape}, expected {expected_shape}")
 
-    for j in range(len(J)):
+    fig, ax = plt.subplots()
+    colors = plt.cm.get_cmap('tab20', len(J))
+
+    for r in range(len(R)):
         for t in range(T):
-            if schedule[j, t] != 0:
-                robot = int(np.ceil(schedule[j, t]))  # 小数の場合、切り上げして整数にする
-                ax.broken_barh([(t, 1)], (robot - 1, 1), facecolors=(colors(j)))
-                ax.text(t + 0.5, robot - 0.5, f"J{J[j]}", ha='center', va='center', color='black')
+            for j in range(len(J)):
+                if best_schedule[j, t] == r + 1:  # ロボット r+1 が仕事 j を時間 t に担当している場合
+                    ax.broken_barh([(t, 1)], (r * 10, 9), facecolors=colors(j))
+                    ax.text(t + 0.5, r * 10 + 5, f'J{j+1}', ha='center', va='center', color='black')
 
     ax.set_xlabel('Time')
-    ax.set_ylabel('Robot')
-    ax.set_yticks(np.arange(len(R)) + 0.5)
-    ax.set_yticklabels([f'R{r}' for r in R])
-    ax.set_xticks(np.arange(T + 1))
+    ax.set_ylabel('Robots')
+    ax.set_yticks(np.arange(len(R)) * 10 + 5)
+    ax.set_yticklabels([f'R{r+1}' for r in range(len(R))])
     plt.show()
