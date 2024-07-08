@@ -6,10 +6,10 @@ Created on Sat May 25 10:32:52 2024
 """
 
 def make_1r():
-    J = [1, 2, 3, 4] # タスクID
+    J = list(range(1, 5))  # タスクID
     p = {1: 1, 2: 3, 3: 2, 4: 2} # 各タスクの仕事量
     P = [(1, 2), (1, 3), (2, 4)] # 各タスクの順序制約
-    R = [1, 2, 3, 4] # 各ロボット種類のID
+    R = list(range(1, 4)) # 各ロボット種類のID
     T = 6 # 総期間長
     # 各期間ごとに仕事をスタートさせる費用，今回の問題では必要ない
     # c = {(j, t): 1 * (t - 1 + p[j]) for j in J for t in range(1, T - p[j] + 2)}
@@ -47,13 +47,16 @@ def make_1r():
         (3, 5): 1,
         (3, 6): 1,
         (3, 7): 1,
-        (4, 1): 1,
-        (4, 2): 1,
-        (4, 3): 1,
-        (4, 4): 1,
-        (4, 5): 1,
-        (4, 6): 1,
-        (4, 7): 1,
     }
+    
+    backup_robots = [4]  # バックアップロボットのリスト
+    R += backup_robots
+    
+    # バックアップロボットのリソース制約を追加（例として各期間1台とする）
+    for t in range(1, T+1):
+        for r in R:
+            RUB[r, t] = 1  # 通常のロボットは常に利用可能
+        for br in backup_robots:
+            RUB[br, t] = 1  # バックアップロボットも同様に設定
 
-    return (J, P, R, T, p, RUB)
+    return J, P, R, T, p, RUB, backup_robots
