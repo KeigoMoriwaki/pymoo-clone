@@ -13,11 +13,12 @@ def main():
     problem_data = make_1r()
     result = solve_problem(problem_data)
 
-    print("Optimization result:", result)
-    print("Optimization result shape:", result.X.shape)
-    print("Optimization result content:", result.X)
+    print(result.F)
+    print(result.X)
+    
+    J, P, R, T, p, RUB, C = problem_data
+    plot_schedule(result, J, R, T, C)
 
-    plot_schedule(result, problem_data)
 
 if __name__ == "__main__":
     main()
