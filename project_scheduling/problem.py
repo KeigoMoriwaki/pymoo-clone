@@ -29,6 +29,7 @@ class ResourceConstrainedSchedulingProblem(Problem):
                          xu=len(self.R),
                          type_var=int)
 
+
     def _evaluate(self, x, out, *args, **kwargs):
         finish_times = []
         constraints = []
@@ -69,3 +70,21 @@ class ResourceConstrainedSchedulingProblem(Problem):
 
         out["F"] = np.array(finish_times).reshape(-1, 1)
         out["G"] = np.array(constraints).reshape(-1, 1)
+
+        # 新しい評価ロジックの追加
+        additional_constraints = []
+        for ind in x:
+            schedule = ind.reshape((len(self.J), self.T))
+            task_constraints = 0
+            for j in range(len(self.J)):
+                total_work = 0
+                for t in range(self.T):
+                    if schedule[j, t] != 0:
+                        total_work += 1
+                if total_work != self.p[self.J[j]]:
+                    task_constraints += 1
+
+            additional_constraints.append(task_constraints)
+
+        additional_constraints = np.array(additional_constraints).reshape(-1, 1)
+        out["G"] = np.hstack((out["G"], additional_constraints)).sum(axis=1).reshape(-1, 1)
