@@ -19,6 +19,5 @@ def main():
     J, P, R, T, p, RUB, C = problem_data
     plot_schedule(result, J, R, T, C)
 
-
 if __name__ == "__main__":
     main()
