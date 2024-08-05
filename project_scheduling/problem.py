@@ -24,32 +24,35 @@ class ResourceConstrainedSchedulingProblem(Problem):
         n_var = len(self.J) * self.T
         super().__init__(n_var=n_var,
                          n_obj=1,
-                         n_constr=1,
+                         n_constr=2,  # 2つの制約に対応
                          xl=0,
                          xu=len(self.R),
                          type_var=int)
 
-
     def _evaluate(self, x, out, *args, **kwargs):
         finish_times = []
-        constraints = []
+        resource_constraints_list = []
+        order_constraints_list = []
 
         for ind in x:
             schedule = ind.reshape((len(self.J), self.T))
             leftover = copy.deepcopy(self.p)
             resource_constraints = 0
+            order_constraints = 0
             t = 0
             for t in range(self.T):
                 n_worker = np.zeros(len(self.R))
                 for j in range(len(self.J)):
                     robot = schedule[j, t]
                     if robot != 0:
-                        if n_worker[robot-1] > 0:
-                            resource_constraints += 1  # 同じロボットに複数のタスクが割り当てられた場合のペナルティ
-                        n_worker[robot-1] += 1
-                        leftover[self.J[j]] -= 1
-                        if leftover[self.J[j]] <= 0:
-                            leftover[self.J[j]] = 0
+                        failure_probability = 1 - self.C * t
+                        if np.random.rand() <= failure_probability:
+                            if n_worker[robot-1] > 0:
+                                resource_constraints += 1
+                            n_worker[robot-1] += 1
+                            leftover[self.J[j]] -= 1
+                            if leftover[self.J[j]] <= 0:
+                                leftover[self.J[j]] = 0
 
                 if sum(leftover.values()) == 0:
                     break
@@ -66,25 +69,20 @@ class ResourceConstrainedSchedulingProblem(Problem):
                     if self.RUB[(r+1, t+1)] < n_worker[r]:
                         resource_constraints += 1
 
-            constraints.append(resource_constraints)
+            # 順序制約のチェック
+            for (pred, succ) in self.P:
+                pred_finish_time = np.where(schedule[self.J.index(pred), :] > 0)[0]
+                succ_start_time = np.where(schedule[self.J.index(succ), :] > 0)[0]
+                
+                if len(pred_finish_time) > 0 and len(succ_start_time) > 0:
+                    pred_finish_time = pred_finish_time[-1] + 1
+                    succ_start_time = succ_start_time[0]
+                    if pred_finish_time > succ_start_time:
+                        order_constraints += 1
+
+            resource_constraints_list.append(resource_constraints)
+            order_constraints_list.append(order_constraints)
 
         out["F"] = np.array(finish_times).reshape(-1, 1)
-        out["G"] = np.array(constraints).reshape(-1, 1)
-
-        # 新しい評価ロジックの追加
-        additional_constraints = []
-        for ind in x:
-            schedule = ind.reshape((len(self.J), self.T))
-            task_constraints = 0
-            for j in range(len(self.J)):
-                total_work = 0
-                for t in range(self.T):
-                    if schedule[j, t] != 0:
-                        total_work += 1
-                if total_work != self.p[self.J[j]]:
-                    task_constraints += 1
-
-            additional_constraints.append(task_constraints)
-
-        additional_constraints = np.array(additional_constraints).reshape(-1, 1)
-        out["G"] = np.hstack((out["G"], additional_constraints)).sum(axis=1).reshape(-1, 1)
+        out["G"] = np.hstack((np.array(resource_constraints_list).reshape(-1, 1),
+                              np.array(order_constraints_list).reshape(-1, 1)))
