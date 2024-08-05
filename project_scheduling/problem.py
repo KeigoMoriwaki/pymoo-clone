@@ -24,11 +24,10 @@ class ResourceConstrainedSchedulingProblem(Problem):
         n_var = len(self.J) * self.T
         super().__init__(n_var=n_var,
                          n_obj=1,
-                         n_constr=len(self.R) * self.T,  # 各ロボットの各時間ステップに対する制約
+                         n_constr=len(self.R) * self.T + len(self.P),  # 順序制約の数を追加
                          xl=0,
                          xu=len(self.R),
                          type_var=int)
-
 
     def _evaluate(self, x, out, *args, **kwargs):
         finish_times = []
@@ -39,7 +38,7 @@ class ResourceConstrainedSchedulingProblem(Problem):
             leftover = {i: self.p[i + 1] for i in range(len(self.J))}
             robot_usage = np.zeros((len(self.R), self.T))
             task_completion = np.zeros(len(self.J))
-            constraint_violation = np.zeros(len(self.R) * self.T)
+            constraint_violation = np.zeros(len(self.R) * self.T + len(self.P))  # 順序制約のための違反配列を追加
 
             for t in range(self.T):
                 robot_assigned = [False] * len(self.R)
@@ -52,12 +51,12 @@ class ResourceConstrainedSchedulingProblem(Problem):
                                 leftover[i] = max(0, leftover[i] - 1)
                                 robot_usage[robot_index, t] += 1
                                 if leftover[i] == 0:
-                                    task_completion[i] = t 
+                                    task_completion[i] = t  # タスク完了時刻を記録
                                 robot_assigned[robot_index] = True
                             else:
-                                schedule[i, t] = 0 
+                                schedule[i, t] = 0
                         else:
-                            schedule[i, t] = 0 
+                            schedule[i, t] = 0
 
             for r in range(len(self.R)):
                 for t in range(self.T):
@@ -76,7 +75,16 @@ class ResourceConstrainedSchedulingProblem(Problem):
                 if failure_prob < np.random.rand():
                     for i, j in enumerate(schedule[:, t]):
                         if j != 0:
-                            finish_times[-1] += 100 
+                            finish_times[-1] += 100
+
+            # 順序制約のチェック
+            for k, (pred, succ) in enumerate(self.P):
+                pred_index = pred - 1
+                succ_index = succ - 1
+                if task_completion[pred_index] >= task_completion[succ_index]:
+                    constraint_violation[len(self.R) * self.T + k] = 1  # 順序制約違反
 
         out["F"] = np.array(finish_times).reshape(-1, 1)
-        out["G"] = np.vstack(constraints).reshape(-1, len(self.R) * self.T)
+        out["G"] = np.vstack(constraints).reshape(-1, len(self.R) * self.T + len(self.P))
+
+        print(f"Constraints shape: {np.vstack(constraints).shape}")
