@@ -15,10 +15,10 @@ from problem import ResourceConstrainedSchedulingProblem
 
 def solve_problem(problem_data):
     problem = ResourceConstrainedSchedulingProblem(problem_data)
-    algorithm = GA(pop_size=100,
+    algorithm = GA(pop_size=300,
                    sampling=IntegerRandomSampling(),
                    mutation=PM(prob=1.0, eta=3.0, vtype=float, repair=RoundingRepair()),
                    crossover=SBX(prob=1.0, eta=3.0, vtype=float, repair=RoundingRepair()),
                    eliminate_duplicates=True)
-    result = minimize(problem, algorithm, ('n_gen', 100), verbose=True)
+    result = minimize(problem, algorithm, ('n_gen', 300), verbose=True)
     return result
