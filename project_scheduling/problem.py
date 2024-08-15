@@ -36,7 +36,7 @@ class ResourceConstrainedSchedulingProblem(Problem):
     def _evaluate(self, x, out, *args, **kwargs):
         num_samples = len(x)
         finish_times = []
-        constraints = []
+        constraints = np.zeros((num_samples, self.n_constr))
 
         for ind in x:
             ind = np.array(ind).reshape((len(self.J), self.T))
@@ -96,9 +96,15 @@ class ResourceConstrainedSchedulingProblem(Problem):
                         total_work += 1
                 if total_work != self.p[self.J[j]]:
                     task_constraints += 1
+                    
 
-            constraints.append([resource_constraints, precedence_constraints, task_constraints])
 
+
+            # 3つの制約値を結合
+            total_constraints = np.array([resource_constraints, precedence_constraints, task_constraints]).sum(axis=0)
+            # 各サンプルの制約ベクトルを追加
+            constraints[ind] = total_constraints
+            
         constraints = np.array(constraints)
         num_constraints = constraints.shape[1]
         if num_constraints != self.n_constr:
