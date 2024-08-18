@@ -29,14 +29,16 @@ class ResourceConstrainedSchedulingProblem(Problem):
         super().__init__(n_var=n_var,
                          n_obj=1,
                          n_constr=n_constr,
-                         xl=0,
+                         xl=1,
                          xu=len(self.R),
                          type_var=int)
 
     def _evaluate(self, x, out, *args, **kwargs):
         num_samples = len(x)
         finish_times = []
-        constraints = []
+        constraints = np.zeros((num_samples, self.n_constr))
+        # 閾値の設定
+        threshold = 10
 
         for ind in x:
             ind = np.array(ind).reshape((len(self.J), self.T))
@@ -47,22 +49,29 @@ class ResourceConstrainedSchedulingProblem(Problem):
             task_constraints = 0
 
             failed = np.zeros((len(self.J), self.T))
-
+            
             for t in range(self.T):
-                n_worker = np.zeros(len(self.R))
-                for j in range(len(self.J)):
-                    robot = schedule[j, t]
-                    if robot != 0:
-                        failure_probability = 1 - self.C * t
-                        if np.random.rand() > failure_probability:
-                            failed[j, t] = 1
-                        else:
-                            if n_worker[robot-1] > 0:
-                                resource_constraints += 1
-                            n_worker[robot-1] += 1
-                            leftover[self.J[j]] -= 1
-                            if leftover[self.J[j]] <= 0:
-                                leftover[self.J[j]] = 0
+                # ロボットの稼働状況を記録する配列
+                robot_status = np.zeros(len(self.R))
+                # 優先度の高いタスクから順に処理
+                for j in sorted(range(len(self.J)), key=lambda j: self.P[j][0] if j < len(self.P) and self.P[j] else float('inf')):
+                # 前提条件を満たしているか確認
+                    if all(schedule[p, t] == 0 for p in self.P[j] for t in range(self.T)):  # ここでTに変更
+                        # タスクを割り当てるロボットを選択
+                        for robot in range(len(self.R)):  # ここでrobotを定義
+                            if robot_status[robot] == 0:  # ロボットが空いている場合
+                                # 空きのあるロボットにタスクを割り当てる
+                                schedule[j, t] = robot + 1
+                                robot_status[robot] = 1
+                                break  # 最初の空いているロボットに割り当てたらループを抜ける
+                    # 同じロボットに複数のタスクが割り当てられた場合は大きなペナルティ
+                    else:
+                        # 同じ時間帯に同じロボットに複数のタスクが割り当てられた場合、ペナルティ
+                        resource_constraints += 10000
+
+                        leftover[self.J[j]] -= 1
+                        if leftover[self.J[j]] <= 0:
+                            leftover[self.J[j]] = 0
 
                 if sum(leftover.values()) == 0:
                     break
@@ -70,24 +79,27 @@ class ResourceConstrainedSchedulingProblem(Problem):
             finish_times.append(t + 1)
 
             for t in range(self.T):
-                n_worker = np.zeros(len(self.R))
-                for j in range(len(self.J)):
-                    robot = schedule[j, t]
-                    if robot != 0:
-                        n_worker[robot-1] += 1
                 for r in range(len(self.R)):
-                    if self.RUB[(r+1, t+1)] < n_worker[r]:
-                        resource_constraints += 1
-
+                    # 同じロボットに割り当てられたタスクの数をカウント
+                    is_assigned = (schedule[:, t] == r+1).astype(int)
+                    num_tasks_assigned = np.sum(is_assigned)
+                    # 同じロボットに複数のタスクが割り当てられている場合、ペナルティを課す
+                    resource_constraints += np.sum(is_assigned * (is_assigned - 1))
+                
             task_finish_time = {}
+            
             for j in range(len(self.J)):
                 for t in range(self.T):
                     if schedule[j, t] != 0 and failed[j, t] == 0:
                         task_finish_time[self.J[j]] = t + 1
 
-            for (x, y) in self.P:
-                if task_finish_time.get(x, 0) >= task_finish_time.get(y, self.T + 1):
-                    precedence_constraints += 1
+            for element in self.P:
+                if len(element) == 2:  # 要素がタプルで、要素数が2の場合
+                    x, y = element
+                    if task_finish_time.get(x, 0) >= task_finish_time.get(y, self.T + 1):
+                        precedence_constraints += 1
+                else:
+                    print(f"Warning: Element in self.P is not a tuple of length 2: {element}")
 
             for j in range(len(self.J)):
                 total_work = 0
@@ -95,14 +107,50 @@ class ResourceConstrainedSchedulingProblem(Problem):
                     if schedule[j, t] != 0 and failed[j, t] == 0:
                         total_work += 1
                 if total_work != self.p[self.J[j]]:
-                    task_constraints += 1
+                    task_constraints += 100
+                    
+            # 3つの制約値を結合
+            total_constraints = np.array([resource_constraints, precedence_constraints, task_constraints]).sum(axis=0)
+            # 各サンプルの制約ベクトルを追加
+            constraints[ind] = total_constraints
+            
+            def simulate_task_execution(schedule, p):
+                # 各タスクの開始時刻と終了時刻を格納する辞書
+                start_times = {}
+                end_times = {}
 
-            constraints.append([resource_constraints, precedence_constraints, task_constraints])
+            # 各時間帯で実行するタスクを決定
+                for t in range(self.T):
+                    for j in range(len(self.J)):
+                        robot = schedule[j, t]
+                        if robot != 0:
+                            # 同じロボットが割り当てられたタスクの中で、数字が小さいタスクを優先
+                            if robot not in start_times:
+                                start_times[robot] = t
+                            else:
+                                start_times[robot] += 1
+                            end_times[robot] = start_times[robot] + self.p[self.J[j]]
 
+                return start_times, end_times
+            
+            
+
+            
         constraints = np.array(constraints)
         num_constraints = constraints.shape[1]
         if num_constraints != self.n_constr:
             raise ValueError(f"Expected {self.n_constr} constraints but got {num_constraints}. Constraints: {constraints}")
 
-        out["F"] = np.array(finish_times).reshape(-1, 1)
+        # 閾値を超えた場合はペナルティを大きくする
+        if total_constraints > threshold:
+            total_constraints *= 1000
+
+        out["F"] = np.array(finish_times).reshape(-1, 1) 
         out["G"] = constraints.reshape(num_samples, self.n_constr)
+        
+        
+        
+        
+        
+        #ロボットに対して同時間帯に2つ以上のタスクを割り振らないようにするのではなく
+        #タスクのIDが若い方を優先するようにする

@@ -24,7 +24,7 @@ def main():
     # result.X を正しい形状に変換
     best_schedule = result.X.reshape((len(J), T))
 
-    plot_schedule(best_schedule, J, R, T)
+    plot_schedule(best_schedule, J, R, T, C)
 
 if __name__ == "__main__":
     main()
