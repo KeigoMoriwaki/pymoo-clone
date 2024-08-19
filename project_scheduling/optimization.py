@@ -21,4 +21,5 @@ def solve_problem(problem_data):
                    crossover=SBX(prob=1.0, eta=3.0, vtype=float, repair=RoundingRepair()),
                    eliminate_duplicates=True)
     result = minimize(problem, algorithm, ('n_gen', 300), verbose=True)
+
     return result
