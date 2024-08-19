@@ -83,13 +83,6 @@ class ResourceConstrainedSchedulingProblem(Problem):
             finish_times.append(t + 1)
             constraints.append(resource_constraints + failure_constraints + precedence_constraints + task_completion_constraints)
             
-            # finish_timesの要素数が300になるように調整
-            if len(finish_times) > 300:
-                finish_times = finish_times[:300]
-            elif len(finish_times) < 300:
-            # 要素数が足りない場合は、適切な値で補填する
-                finish_times.extend([0] * (300 - len(finish_times)))
-
         out["F"] = np.array(finish_times).reshape(-1, 1)
         out["G"] = np.array(constraints).reshape(-1, 1)
         
