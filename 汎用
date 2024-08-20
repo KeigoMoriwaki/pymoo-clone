@@ -1,0 +1,391 @@
+{
+  "nbformat": 4,
+  "nbformat_minor": 0,
+  "metadata": {
+    "colab": {
+      "provenance": [],
+      "include_colab_link": true
+    },
+    "kernelspec": {
+      "name": "python3",
+      "display_name": "Python 3"
+    },
+    "language_info": {
+      "name": "python"
+    }
+  },
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "view-in-github",
+        "colab_type": "text"
+      },
+      "source": [
+        "<a href=\"https://colab.research.google.com/github/KeigoMoriwaki/pymoo-clone/blob/main/%E6%B1%8E%E7%94%A8\" target=\"_parent\"><img src=\"https://colab.research.google.com/assets/colab-badge.svg\" alt=\"Open In Colab\"/></a>"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "from IPython.display import clear_output\n",
+        "!pip install -U pymoo\n",
+        "clear_output()"
+      ],
+      "metadata": {
+        "id": "tGg0g1S2sI9h"
+      },
+      "execution_count": 2,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "def make_1r():\n",
+        "    J = [1, 2, 3, 4] # タスクID\n",
+        "    p = {1: 1, 2: 3, 3: 2, 4: 2} # 各タスクの仕事量\n",
+        "    P = [(1, 2), (1, 3), (2, 4)] # 各タスクの順序制約\n",
+        "    R = [1, 2, 3] # 各ロボット種類のID\n",
+        "    T = 6 # 総期間長\n",
+        "    # 各期間ごとに仕事をスタートさせる費用，今回の問題では必要ない\n",
+        "    # c = {(j, t): 1 * (t - 1 + p[j]) for j in J for t in range(1, T - p[j] + 2)}\n",
+        "    # 各期間ごとにどの資源がどれだけ必要かが定義されるが，今回の問題では必要ない\n",
+        "    # a = {\n",
+        "    #     (1, 1, 0): 2,\n",
+        "    #     (2, 1, 0): 2,\n",
+        "    #     (2, 1, 1): 1,\n",
+        "    #     (2, 1, 2): 1,\n",
+        "    #     (3, 1, 0): 1,\n",
+        "    #     (3, 1, 1): 1,\n",
+        "    #     (4, 1, 0): 1,\n",
+        "    #     (4, 1, 1): 2,\n",
+        "    # }\n",
+        "    # 各期間ごとにどのロボットがどれだけ働けるか（各ロボットの台数）\n",
+        "    RUB = {\n",
+        "        (1, 1): 2,\n",
+        "        (1, 2): 2,\n",
+        "        (1, 3): 2,\n",
+        "        (1, 4): 2,\n",
+        "        (1, 5): 2,\n",
+        "        (1, 6): 2,\n",
+        "        (1, 7): 2,\n",
+        "        (2, 1): 1,\n",
+        "        (2, 2): 1,\n",
+        "        (2, 3): 1,\n",
+        "        (2, 4): 1,\n",
+        "        (2, 5): 1,\n",
+        "        (2, 6): 1,\n",
+        "        (2, 7): 1,\n",
+        "        (3, 1): 1,\n",
+        "        (3, 2): 1,\n",
+        "        (3, 3): 1,\n",
+        "        (3, 4): 1,\n",
+        "        (3, 5): 1,\n",
+        "        (3, 6): 1,\n",
+        "        (3, 7): 1,\n",
+        "    }\n",
+        "\n",
+        "    return (J, P, R, T, p, RUB)"
+      ],
+      "metadata": {
+        "id": "w3z9InwqswhC"
+      },
+      "execution_count": 3,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "from pymoo.algorithms.soo.nonconvex.ga import GA\n",
+        "from pymoo.optimize import minimize\n",
+        "from pymoo.operators.sampling.rnd import IntegerRandomSampling\n",
+        "from pymoo.operators.crossover.ux import UniformCrossover\n",
+        "from pymoo.operators.mutation.rm import ChoiceRandomMutation\n",
+        "from pymoo.operators.crossover.sbx import SBX\n",
+        "from pymoo.operators.mutation.pm import PM\n",
+        "from pymoo.operators.repair.rounding import RoundingRepair\n",
+        "\n",
+        "def solve_problem(problem_data):\n",
+        "    problem = ResourceConstrainedSchedulingProblem(problem_data)\n",
+        "\n",
+        "    # algorithm = GA(pop_size=100,\n",
+        "    #                sampling=IntegerRandomSampling(),\n",
+        "    #                mutation=ChoiceRandomMutation(),\n",
+        "    #                crossover=UniformCrossover(),\n",
+        "    #                eliminate_duplicates=True)\n",
+        "    # 整数変数を探索するようにPMとSBXに切り上げ修復（RoundingRepair）を使うものを使用\n",
+        "    algorithm = GA(pop_size=100,\n",
+        "                   sampling=IntegerRandomSampling(),\n",
+        "                   mutation=PM(prob=1.0, eta=3.0, vtype=float, repair=RoundingRepair()),\n",
+        "                   crossover=SBX(prob=1.0, eta=3.0, vtype=float, repair=RoundingRepair()),\n",
+        "                   eliminate_duplicates=True)\n",
+        "\n",
+        "    result = minimize(problem, algorithm, ('n_gen', 100), verbose=True)\n",
+        "\n",
+        "    return result"
+      ],
+      "metadata": {
+        "id": "vGkg7CNt2N6H"
+      },
+      "execution_count": 4,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "import numpy as np\n",
+        "import copy\n",
+        "from pymoo.core.problem import Problem\n",
+        "\n",
+        "class ResourceConstrainedSchedulingProblem(Problem):\n",
+        "    # Parameters:\n",
+        "    #     - J: set of jobs\n",
+        "    #     - P: set of precedence constraints between jobs\n",
+        "    #     - R: set of resources\n",
+        "    #     - T: number of periods\n",
+        "    #     - p[j]: processing time of job j\n",
+        "    #     - a[j,r,t]: resource r usage for job j on period t (after job starts)\n",
+        "    #     - RUB[r,t]: upper bound for resource r on period t\n",
+        "\n",
+        "    def __init__(self, problem_data):\n",
+        "        self.J, self.P, self.R, self.T, self.p, self.RUB = problem_data\n",
+        "        n_var = len(self.J) * self.T\n",
+        "        super().__init__(n_var=n_var,\n",
+        "                         n_obj=1,\n",
+        "                         n_constr=1,\n",
+        "                         xl=0,\n",
+        "                         xu=len(self.R),\n",
+        "                         type_var=int)\n",
+        "\n",
+        "    def _evaluate(self, x, out, *args, **kwargs):\n",
+        "        # ここでxには100個体の全変数が入っている（個体群サイズ*変数長配列）\n",
+        "        # 各個体を別々に考える（頑張れば一度に計算できるが分かりやすくするため）\n",
+        "        finish_times = []\n",
+        "        constraints = []\n",
+        "        for ind in x:\n",
+        "            schedule = ind.reshape((len(self.J), self.T))\n",
+        "            # 目的関数（仕事の完了時間）\n",
+        "            leftover = copy.deepcopy(self.p)\n",
+        "            for t, s in enumerate(schedule.T):\n",
+        "                for i, j in enumerate(s):\n",
+        "                    if j != 0:\n",
+        "                        leftover[i+1] = max(0, leftover[i+1]-1)\n",
+        "                if sum(leftover.values()) == 0:\n",
+        "                    break\n",
+        "            finish_times.append(t)\n",
+        "\n",
+        "            # 各期間ごとにロボット数を超過していないか？\n",
+        "            resource_constraints = 0\n",
+        "            for t, s in enumerate(schedule.T):\n",
+        "                n_worker = np.zeros(len(self.R))\n",
+        "                for i, j in enumerate(s):\n",
+        "                    if j != 0:\n",
+        "                        n_worker[j-1] += 1\n",
+        "                for r in range(len(self.R)):\n",
+        "                    resource_constraints += min(0, self.RUB[(r+1, t+1)] - n_worker[r])\n",
+        "            constraints.append(resource_constraints)\n",
+        "\n",
+        "        out[\"F\"] = finish_times\n",
+        "        out[\"G\"] = constraints"
+      ],
+      "metadata": {
+        "id": "ErR-wOQLsgyS"
+      },
+      "execution_count": 11,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "import matplotlib.pyplot as plt\n",
+        "import numpy as np\n",
+        "\n",
+        "def plot_schedule(result, J, R, T):\n",
+        "    schedule = result.X.reshape((len(J), T))\n",
+        "\n",
+        "    fig, ax = plt.subplots(figsize=(12, 6))\n",
+        "    colors = plt.cm.get_cmap('tab10', len(J))\n",
+        "\n",
+        "    for j in range(len(J)):\n",
+        "        for t in range(T):\n",
+        "            if schedule[j, t] != 0:\n",
+        "                robot = int(np.ceil(schedule[j, t]))  # 小数の場合、切り上げして整数にする\n",
+        "                ax.broken_barh([(t, 1)], (robot - 1, 1), facecolors=(colors(j)))\n",
+        "                ax.text(t + 0.5, robot - 0.5, f\"J{J[j]}\", ha='center', va='center', color='black')\n",
+        "\n",
+        "    ax.set_xlabel('Time')\n",
+        "    ax.set_ylabel('Robot')\n",
+        "    ax.set_yticks(np.arange(len(R)) + 0.5)\n",
+        "    ax.set_yticklabels([f'R{r}' for r in R])\n",
+        "    ax.set_xticks(np.arange(T + 1))\n",
+        "    plt.show()"
+      ],
+      "metadata": {
+        "id": "iYBuck4tIKiR"
+      },
+      "execution_count": 12,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 14,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 1000
+        },
+        "id": "ZpKc_Bk4r7DO",
+        "outputId": "d09136cb-a740-44cf-8a62-dc07e751d866"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "=================================================================================\n",
+            "n_gen  |  n_eval  |     cv_min    |     cv_avg    |     f_avg     |     f_min    \n",
+            "=================================================================================\n",
+            "     1 |      100 |  0.000000E+00 |  0.000000E+00 |  3.0600000000 |  2.0000000000\n",
+            "     2 |      200 |  0.000000E+00 |  0.000000E+00 |  2.1200000000 |  2.0000000000\n",
+            "     3 |      300 |  0.000000E+00 |  0.000000E+00 |  2.0000000000 |  2.0000000000\n",
+            "     4 |      400 |  0.000000E+00 |  0.000000E+00 |  2.0000000000 |  2.0000000000\n",
+            "     5 |      500 |  0.000000E+00 |  0.000000E+00 |  2.0000000000 |  2.0000000000\n",
+            "     6 |      600 |  0.000000E+00 |  0.000000E+00 |  2.0000000000 |  2.0000000000\n",
+            "     7 |      700 |  0.000000E+00 |  0.000000E+00 |  2.0000000000 |  2.0000000000\n",
+            "     8 |      800 |  0.000000E+00 |  0.000000E+00 |  2.0000000000 |  2.0000000000\n",
+            "     9 |      900 |  0.000000E+00 |  0.000000E+00 |  2.0000000000 |  2.0000000000\n",
+            "    10 |     1000 |  0.000000E+00 |  0.000000E+00 |  2.0000000000 |  2.0000000000\n",
+            "    11 |     1100 |  0.000000E+00 |  0.000000E+00 |  2.0000000000 |  2.0000000000\n",
+            "    12 |     1200 |  0.000000E+00 |  0.000000E+00 |  2.0000000000 |  2.0000000000\n",
+            "    13 |     1300 |  0.000000E+00 |  0.000000E+00 |  2.0000000000 |  2.0000000000\n",
+            "    14 |     1400 |  0.000000E+00 |  0.000000E+00 |  2.0000000000 |  2.0000000000\n",
+            "    15 |     1500 |  0.000000E+00 |  0.000000E+00 |  2.0000000000 |  2.0000000000\n",
+            "    16 |     1600 |  0.000000E+00 |  0.000000E+00 |  2.0000000000 |  2.0000000000\n",
+            "    17 |     1700 |  0.000000E+00 |  0.000000E+00 |  2.0000000000 |  2.0000000000\n",
+            "    18 |     1800 |  0.000000E+00 |  0.000000E+00 |  2.0000000000 |  2.0000000000\n",
+            "    19 |     1900 |  0.000000E+00 |  0.000000E+00 |  2.0000000000 |  2.0000000000\n",
+            "    20 |     2000 |  0.000000E+00 |  0.000000E+00 |  2.0000000000 |  2.0000000000\n",
+            "    21 |     2100 |  0.000000E+00 |  0.000000E+00 |  2.0000000000 |  2.0000000000\n",
+            "    22 |     2200 |  0.000000E+00 |  0.000000E+00 |  2.0000000000 |  2.0000000000\n",
+            "    23 |     2300 |  0.000000E+00 |  0.000000E+00 |  2.0000000000 |  2.0000000000\n",
+            "    24 |     2400 |  0.000000E+00 |  0.000000E+00 |  2.0000000000 |  2.0000000000\n",
+            "    25 |     2500 |  0.000000E+00 |  0.000000E+00 |  2.0000000000 |  2.0000000000\n",
+            "    26 |     2600 |  0.000000E+00 |  0.000000E+00 |  2.0000000000 |  2.0000000000\n",
+            "    27 |     2700 |  0.000000E+00 |  0.000000E+00 |  2.0000000000 |  2.0000000000\n",
+            "    28 |     2800 |  0.000000E+00 |  0.000000E+00 |  2.0000000000 |  2.0000000000\n",
+            "    29 |     2900 |  0.000000E+00 |  0.000000E+00 |  2.0000000000 |  2.0000000000\n",
+            "    30 |     3000 |  0.000000E+00 |  0.000000E+00 |  2.0000000000 |  2.0000000000\n",
+            "    31 |     3100 |  0.000000E+00 |  0.000000E+00 |  2.0000000000 |  2.0000000000\n",
+            "    32 |     3200 |  0.000000E+00 |  0.000000E+00 |  2.0000000000 |  2.0000000000\n",
+            "    33 |     3300 |  0.000000E+00 |  0.000000E+00 |  2.0000000000 |  2.0000000000\n",
+            "    34 |     3400 |  0.000000E+00 |  0.000000E+00 |  2.0000000000 |  2.0000000000\n",
+            "    35 |     3500 |  0.000000E+00 |  0.000000E+00 |  2.0000000000 |  2.0000000000\n",
+            "    36 |     3600 |  0.000000E+00 |  0.000000E+00 |  2.0000000000 |  2.0000000000\n",
+            "    37 |     3700 |  0.000000E+00 |  0.000000E+00 |  2.0000000000 |  2.0000000000\n",
+            "    38 |     3800 |  0.000000E+00 |  0.000000E+00 |  2.0000000000 |  2.0000000000\n",
+            "    39 |     3900 |  0.000000E+00 |  0.000000E+00 |  2.0000000000 |  2.0000000000\n",
+            "    40 |     4000 |  0.000000E+00 |  0.000000E+00 |  2.0000000000 |  2.0000000000\n",
+            "    41 |     4100 |  0.000000E+00 |  0.000000E+00 |  2.0000000000 |  2.0000000000\n",
+            "    42 |     4200 |  0.000000E+00 |  0.000000E+00 |  2.0000000000 |  2.0000000000\n",
+            "    43 |     4300 |  0.000000E+00 |  0.000000E+00 |  2.0000000000 |  2.0000000000\n",
+            "    44 |     4400 |  0.000000E+00 |  0.000000E+00 |  2.0000000000 |  2.0000000000\n",
+            "    45 |     4500 |  0.000000E+00 |  0.000000E+00 |  2.0000000000 |  2.0000000000\n",
+            "    46 |     4600 |  0.000000E+00 |  0.000000E+00 |  2.0000000000 |  2.0000000000\n",
+            "    47 |     4700 |  0.000000E+00 |  0.000000E+00 |  2.0000000000 |  2.0000000000\n",
+            "    48 |     4800 |  0.000000E+00 |  0.000000E+00 |  2.0000000000 |  2.0000000000\n",
+            "    49 |     4900 |  0.000000E+00 |  0.000000E+00 |  2.0000000000 |  2.0000000000\n",
+            "    50 |     5000 |  0.000000E+00 |  0.000000E+00 |  2.0000000000 |  2.0000000000\n",
+            "    51 |     5100 |  0.000000E+00 |  0.000000E+00 |  2.0000000000 |  2.0000000000\n",
+            "    52 |     5200 |  0.000000E+00 |  0.000000E+00 |  2.0000000000 |  2.0000000000\n",
+            "    53 |     5300 |  0.000000E+00 |  0.000000E+00 |  2.0000000000 |  2.0000000000\n",
+            "    54 |     5400 |  0.000000E+00 |  0.000000E+00 |  2.0000000000 |  2.0000000000\n",
+            "    55 |     5500 |  0.000000E+00 |  0.000000E+00 |  2.0000000000 |  2.0000000000\n",
+            "    56 |     5600 |  0.000000E+00 |  0.000000E+00 |  2.0000000000 |  2.0000000000\n",
+            "    57 |     5700 |  0.000000E+00 |  0.000000E+00 |  2.0000000000 |  2.0000000000\n",
+            "    58 |     5800 |  0.000000E+00 |  0.000000E+00 |  2.0000000000 |  2.0000000000\n",
+            "    59 |     5900 |  0.000000E+00 |  0.000000E+00 |  2.0000000000 |  2.0000000000\n",
+            "    60 |     6000 |  0.000000E+00 |  0.000000E+00 |  2.0000000000 |  2.0000000000\n",
+            "    61 |     6100 |  0.000000E+00 |  0.000000E+00 |  2.0000000000 |  2.0000000000\n",
+            "    62 |     6200 |  0.000000E+00 |  0.000000E+00 |  2.0000000000 |  2.0000000000\n",
+            "    63 |     6300 |  0.000000E+00 |  0.000000E+00 |  2.0000000000 |  2.0000000000\n",
+            "    64 |     6400 |  0.000000E+00 |  0.000000E+00 |  2.0000000000 |  2.0000000000\n",
+            "    65 |     6500 |  0.000000E+00 |  0.000000E+00 |  2.0000000000 |  2.0000000000\n",
+            "    66 |     6600 |  0.000000E+00 |  0.000000E+00 |  2.0000000000 |  2.0000000000\n",
+            "    67 |     6700 |  0.000000E+00 |  0.000000E+00 |  2.0000000000 |  2.0000000000\n",
+            "    68 |     6800 |  0.000000E+00 |  0.000000E+00 |  2.0000000000 |  2.0000000000\n",
+            "    69 |     6900 |  0.000000E+00 |  0.000000E+00 |  2.0000000000 |  2.0000000000\n",
+            "    70 |     7000 |  0.000000E+00 |  0.000000E+00 |  2.0000000000 |  2.0000000000\n",
+            "    71 |     7100 |  0.000000E+00 |  0.000000E+00 |  2.0000000000 |  2.0000000000\n",
+            "    72 |     7200 |  0.000000E+00 |  0.000000E+00 |  2.0000000000 |  2.0000000000\n",
+            "    73 |     7300 |  0.000000E+00 |  0.000000E+00 |  2.0000000000 |  2.0000000000\n",
+            "    74 |     7400 |  0.000000E+00 |  0.000000E+00 |  2.0000000000 |  2.0000000000\n",
+            "    75 |     7500 |  0.000000E+00 |  0.000000E+00 |  2.0000000000 |  2.0000000000\n",
+            "    76 |     7600 |  0.000000E+00 |  0.000000E+00 |  2.0000000000 |  2.0000000000\n",
+            "    77 |     7700 |  0.000000E+00 |  0.000000E+00 |  2.0000000000 |  2.0000000000\n",
+            "    78 |     7800 |  0.000000E+00 |  0.000000E+00 |  2.0000000000 |  2.0000000000\n",
+            "    79 |     7900 |  0.000000E+00 |  0.000000E+00 |  2.0000000000 |  2.0000000000\n",
+            "    80 |     8000 |  0.000000E+00 |  0.000000E+00 |  2.0000000000 |  2.0000000000\n",
+            "    81 |     8100 |  0.000000E+00 |  0.000000E+00 |  2.0000000000 |  2.0000000000\n",
+            "    82 |     8200 |  0.000000E+00 |  0.000000E+00 |  2.0000000000 |  2.0000000000\n",
+            "    83 |     8300 |  0.000000E+00 |  0.000000E+00 |  2.0000000000 |  2.0000000000\n",
+            "    84 |     8400 |  0.000000E+00 |  0.000000E+00 |  2.0000000000 |  2.0000000000\n",
+            "    85 |     8500 |  0.000000E+00 |  0.000000E+00 |  2.0000000000 |  2.0000000000\n",
+            "    86 |     8600 |  0.000000E+00 |  0.000000E+00 |  2.0000000000 |  2.0000000000\n",
+            "    87 |     8700 |  0.000000E+00 |  0.000000E+00 |  2.0000000000 |  2.0000000000\n",
+            "    88 |     8800 |  0.000000E+00 |  0.000000E+00 |  2.0000000000 |  2.0000000000\n",
+            "    89 |     8900 |  0.000000E+00 |  0.000000E+00 |  2.0000000000 |  2.0000000000\n",
+            "    90 |     9000 |  0.000000E+00 |  0.000000E+00 |  2.0000000000 |  2.0000000000\n",
+            "    91 |     9100 |  0.000000E+00 |  0.000000E+00 |  2.0000000000 |  2.0000000000\n",
+            "    92 |     9200 |  0.000000E+00 |  0.000000E+00 |  2.0000000000 |  2.0000000000\n",
+            "    93 |     9300 |  0.000000E+00 |  0.000000E+00 |  2.0000000000 |  2.0000000000\n",
+            "    94 |     9400 |  0.000000E+00 |  0.000000E+00 |  2.0000000000 |  2.0000000000\n",
+            "    95 |     9500 |  0.000000E+00 |  0.000000E+00 |  2.0000000000 |  2.0000000000\n",
+            "    96 |     9600 |  0.000000E+00 |  0.000000E+00 |  2.0000000000 |  2.0000000000\n",
+            "    97 |     9700 |  0.000000E+00 |  0.000000E+00 |  2.0000000000 |  2.0000000000\n",
+            "    98 |     9800 |  0.000000E+00 |  0.000000E+00 |  2.0000000000 |  2.0000000000\n",
+            "    99 |     9900 |  0.000000E+00 |  0.000000E+00 |  2.0000000000 |  2.0000000000\n",
+            "   100 |    10000 |  0.000000E+00 |  0.000000E+00 |  2.0000000000 |  2.0000000000\n",
+            "[2.]\n",
+            "[3 3 0 2 0 3 3 1 1 3 1 3 3 0 1 3 1 1 3 1 2 0 2 2]\n"
+          ]
+        },
+        {
+          "output_type": "stream",
+          "name": "stderr",
+          "text": [
+            "<ipython-input-12-a0d41af786a1>:8: MatplotlibDeprecationWarning: The get_cmap function was deprecated in Matplotlib 3.7 and will be removed two minor releases later. Use ``matplotlib.colormaps[name]`` or ``matplotlib.colormaps.get_cmap(obj)`` instead.\n",
+            "  colors = plt.cm.get_cmap('tab10', len(J))\n"
+          ]
+        },
+        {
+          "output_type": "display_data",
+          "data": {
+            "text/plain": [
+              "<Figure size 1200x600 with 1 Axes>"
+            ],
+            "image/png": "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EFEOAAAAhdSUHvBuqFarSZKlS5cWXgIAAEB78Nf+/GuPvpV2EeXLli1LkvTr16/wEgAAANqTZcuWpUePHm/59Ur17bK9DWhqasrcuXPTvXv3VCqV0nPe0tKlS9OvX7/MmTMn9fX1pefQCjhnaC7nDM3lnKG5nDM0l3OG5mot50y1Ws2yZcvSt2/fdOjw1q8cbxePlHfo0CHbb7996RnvWH19fYs+uWh5nDM0l3OG5nLO0FzOGZrLOUNztYZz5m89Qv5X3ugNAAAAChHlAAAAUIgob0Fqa2tzzjnnpLa2tvQUWgnnDM3lnKG5nDM0l3OG5nLO0Fxt7ZxpF2/0BgAAAC2RR8oBAACgEFEOAAAAhYhyAAAAKESUAwAAQCGivAW5/PLLs+OOO6ZLly7Zb7/98tBDD5WeRAt177335rDDDkvfvn1TqVQybdq00pNowSZPnpx99tkn3bt3zzbbbJMjjjgiTz31VOlZtGBTp07NkCFDUl9fn/r6+uy///659dZbS8+iFbnwwgtTqVRyyimnlJ5CC3XuueemUqms97HbbruVnkUL9+KLL+azn/1sevXqlbq6ugwePDgzZswoPWujifIW4qabbsqpp56ac845J48++miGDh2aj33sY1m4cGHpabRAK1asyNChQ3P55ZeXnkIrcM899+Tkk0/OAw88kDvuuCNr1qzJRz/60axYsaL0NFqo7bffPhdeeGEeeeSRzJgxIx/+8IfziU98Io8//njpabQCDz/8cK688soMGTKk9BRauN133z3z5s1b9/Hb3/629CRasMWLF+eAAw5Ip06dcuutt+aJJ57IN77xjfTs2bP0tI3mR6K1EPvtt1/22WeffPvb306SNDU1pV+/fvniF7+YiRMnFl5HS1apVHLzzTfniCOOKD2FVuKll17KNttsk3vuuScf/OAHS8+hldhqq63y9a9/PSeccELpKbRgy5cvz957751//dd/zde+9rXsueeeufTSS0vPogU699xzM23atMycObP0FFqJiRMn5r777stvfvOb0lM2OY+UtwCrV6/OI488koMPPnjdsQ4dOuTggw/O7373u4LLgLZoyZIlSV6PLHg7jY2NufHGG7NixYrsv//+pefQwp188sn5+Mc/vt6/aeCtPPPMM+nbt2922mmnfOYzn8ns2bNLT6IF+8UvfpHhw4dn9OjR2WabbbLXXnvlqquuKj1rkxDlLcDLL7+cxsbGbLvttusd33bbbTN//vxCq4C2qKmpKaecckoOOOCA7LHHHqXn0IL98Y9/TLdu3VJbW5uTTjopN998c973vveVnkULduONN+bRRx/N5MmTS0+hFdhvv/1y/fXXZ/r06Zk6dWqef/75HHjggVm2bFnpabRQf/7znzN16tQMGjQot912W77whS/kS1/6Um644YbS0zZaTekBALx7Tj755MyaNcvr9nhbu+66a2bOnJklS5bkJz/5ScaMGZN77rlHmPOm5syZk3/6p3/KHXfckS5dupSeQytw6KGHrvv1kCFDst9++6V///750Y9+5GUyvKmmpqYMHz48F1xwQZJkr732yqxZs3LFFVdkzJgxhddtHI+UtwC9e/dOx44ds2DBgvWOL1iwINttt12hVUBbM378+Nxyyy25++67s/3225eeQwvXuXPnDBw4MMOGDcvkyZMzdOjQXHbZZaVn0UI98sgjWbhwYfbee+/U1NSkpqYm99xzT775zW+mpqYmjY2NpSfSwm255ZbZZZdd8uyzz5aeQgvVp0+fN3xj+L3vfW+beNmDKG8BOnfunGHDhuXOO+9cd6ypqSl33nmn1+8BG61arWb8+PG5+eabc9ddd2XAgAGlJ9EKNTU1ZdWqVaVn0EJ95CMfyR//+MfMnDlz3cfw4cPzmc98JjNnzkzHjh1LT6SFW758eZ577rn06dOn9BRaqAMOOOANP9L16aefTv/+/Qst2nQ8fb2FOPXUUzNmzJgMHz48++67by699NKsWLEi48aNKz2NFmj58uXrfSf5+eefz8yZM7PVVltlhx12KLiMlujkk0/OD3/4w/z85z9P9+7d171XRY8ePVJXV1d4HS3RpEmTcuihh2aHHXbIsmXL8sMf/jC//vWvc9ttt5WeRgvVvXv3N7xPRdeuXdOrVy/vX8Gb+vKXv5zDDjss/fv3z9y5c3POOeekY8eOOeaYY0pPo4WaMGFCRowYkQsuuCBHHXVUHnrooXznO9/Jd77zndLTNpoobyGOPvrovPTSSzn77LMzf/787Lnnnpk+ffob3vwNkmTGjBkZOXLkus9PPfXUJMmYMWNy/fXXF1pFSzV16tQkyUEHHbTe8euuuy5jx4599wfR4i1cuDDHH3985s2blx49emTIkCG57bbbcsghh5SeBrQRL7zwQo455pi88sor2XrrrfOBD3wgDzzwQLbeeuvS02ih9tlnn9x8882ZNGlSvvrVr2bAgAG59NJL85nPfKb0tI3m55QDAABAIV5TDgAAAIWIcgAAAChElAMAAEAhohwAAAAKEeUAAABQiCgHAACAQkQ5AAAAFCLKAaCdGzt2bI444ojSMwCgXaopPQAA2Hwqlcrf/Po555yTyy67LNVq9V1aBAD8d6IcANqwefPmrfv1TTfdlLPPPjtPPfXUumPdunVLt27dSkwDAOLp6wDQpm233XbrPnr06JFKpbLesW7dur3h6esHHXRQvvjFL+aUU05Jz549s+222+aqq67KihUrMm7cuHTv3j0DBw7Mrbfeut6fNWvWrBx66KHp1q1btt122xx33HF5+eWX3+W/MQC0LqIcAHiDG264Ib17985DDz2UL37xi/nCF76Q0aNHZ8SIEXn00Ufz0Y9+NMcdd1xee+21JMmrr76aD3/4w9lrr70yY8aMTJ8+PQsWLMhRRx1V+G8CAC2bKAcA3mDo0KE566yzMmjQoEyaNCldunRJ7969c+KJJ2bQoEE5++yz88orr+QPf/hDkuTb3/529tprr1xwwQXZbbfdstdee+Xaa6/N3Xffnaeffrrw3wYAWi6vKQcA3mDIkCHrft2xY8f06tUrgwcPXnds2223TZIsXLgwSfLYY4/l7rvvftPXpz/33HPZZZddNvNiAGidRDkA8AadOnVa7/NKpbLesb++q3tTU1OSZPny5TnssMMyZcqUN9xXnz59NuNSAGjdRDkAsNH23nvv/PSnP82OO+6Ymhr/vACAd8prygGAjXbyySdn0aJFOeaYY/Lwww/nueeey2233ZZx48alsbGx9DwAaLFEOQCw0fr27Zv77rsvjY2N+ehHP5rBgwfnlFNOyZZbbpkOHfxzAwDeSqVarVZLjwAAAID2yLeuAQAAoBBRDgAAAIWIcgAAAChElAMAAEAhohwAAAAKEeUAAABQiCgHAACAQkQ5AAAAFCLKAQAAoBBRDgAAAIWIcgAAAChElAMAAEAh/w/8Ei+51jBaZwAAAABJRU5ErkJggg==\n"
+          },
+          "metadata": {}
+        }
+      ],
+      "source": [
+        "problem_data = make_1r()\n",
+        "J, P, R, T, p, RUB = problem_data\n",
+        "result = solve_problem(problem_data)\n",
+        "\n",
+        "print(result.F)\n",
+        "print(result.X)\n",
+        "plot_schedule(result, J, R, T)\n"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [],
+      "metadata": {
+        "id": "Y5iJnjzesGv3"
+      },
+      "execution_count": null,
+      "outputs": []
+    }
+  ]
+}
