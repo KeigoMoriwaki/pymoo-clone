@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 def plot_schedule(result, J, R, T):
+    #print(f"Debug in plot_schedule: T={T}")  # Add debug to ensure T is an integer
     schedule = result.X.reshape((len(J), T))
     
     fig, ax = plt.subplots(figsize=(12, 6))
@@ -16,10 +17,12 @@ def plot_schedule(result, J, R, T):
     
     for j in range(len(J)):
         for t in range(T):
-            if schedule[j, t] != 0:
-                robot = int(np.ceil(schedule[j, t]))  # 小数の場合、切り上げして整数にする
-                ax.broken_barh([(t, 1)], (robot - 1, 1), facecolors=(colors(j)))
-                ax.text(t + 0.5, robot - 0.5, f"J{J[j]}", ha='center', va='center', color='black')
+            if schedule[j, t] > 0:
+                robot = int(np.ceil(schedule[j, t]))
+                face_color = colors(j)
+                text_color = 'red' if schedule[j, t] <= 1 else 'black'  # タスクの仕事量が1未満の場合、故障と見なす
+                ax.broken_barh([(t, 1)], (robot - 1, 1), facecolors=(face_color))
+                ax.text(t + 0.5, robot - 0.5, f"J{J[j]}", ha='center', va='center', color=text_color)
     
     ax.set_xlabel('Time')
     ax.set_ylabel('Robot')

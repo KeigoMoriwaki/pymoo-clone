@@ -51,4 +51,4 @@ def make_1r():
         (3, 7): 1,
     }
 
-    return J, P, R, T, p, RUB, C
+    return J, p, P, R, T, C, RUB

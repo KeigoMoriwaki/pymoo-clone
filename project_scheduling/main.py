@@ -13,9 +13,12 @@ from plot import plot_schedule
 
 def main():
     problem_data = make_1r()
+    
+    J, p, P, R, T, C, RUB = problem_data
+    
     result = solve_problem(problem_data)
     
-    J, P, R, T, p, c, RUB = problem_data
+    J, p, P, R, T, C, RUB = problem_data  # `C` の読み込み修正
     plot_schedule(result, J, R, T)
 
 if __name__ == "__main__":
