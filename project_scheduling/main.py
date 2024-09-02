@@ -13,14 +13,13 @@ from plot import plot_schedule
 
 def main():
     problem_data = make_1r()
-    result = solve_problem(problem_data)
-
-    print(result.F)
-    print(result.X)
     
-    J, P, R, T, p, RUB, C = problem_data
-    plot_schedule(result, J, R, T, C)
-
+    J, p, P, R, T, C, RUB = problem_data
+    
+    result = solve_problem(problem_data)
+    
+    J, p, P, R, T, C, RUB = problem_data  # `C` の読み込み修正
+    plot_schedule(result, J, R, T)
 
 if __name__ == "__main__":
     main()

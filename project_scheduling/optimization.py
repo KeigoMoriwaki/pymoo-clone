@@ -14,7 +14,8 @@ from pymoo.operators.repair.rounding import RoundingRepair
 from problem import ResourceConstrainedSchedulingProblem
 
 def solve_problem(problem_data):
-    problem = ResourceConstrainedSchedulingProblem(problem_data)
+    J, P, R, T, p, C, RUB = problem_data
+    problem = ResourceConstrainedSchedulingProblem(J, P, R, T, p, C, RUB)
     algorithm = GA(pop_size=300,
                    sampling=IntegerRandomSampling(),
                    mutation=PM(prob=1.0, eta=3.0, vtype=float, repair=RoundingRepair()),

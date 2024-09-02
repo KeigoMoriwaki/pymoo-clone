@@ -6,87 +6,67 @@ Created on Sat May 25 10:32:04 2024
 """
 
 import numpy as np
-import copy
 from pymoo.core.problem import Problem
 
 class ResourceConstrainedSchedulingProblem(Problem):
-    # Parameters:
-    #     - J: set of jobs
-    #     - P: set of precedence constraints between jobs
-    #     - R: set of resources
-    #     - T: number of periods
-    #     - p[j]: processing time of job j
-    #     - RUB[r,t]: upper bound for resource r on period t
-    #     - C: failure probability coefficient
 
-    def __init__(self, problem_data):
-        self.J, self.P, self.R, self.T, self.p, self.RUB, self.C = problem_data
-        n_var = len(self.J) * self.T
+    def __init__(self, J, p, P, R, T, C, RUB):
+        #print(f"Debug: Inside class, J={J}, P={P}, R={R}, T={T}, p={p}, C={C}, RUB={RUB}")
+        # Rがリストで、Tが整数であることを確認
+        #print(f"Type of R: {type(R)}, Value of R: {R}")
+        #print(f"Type of T: {type(T)}, Value of T: {T}")
+        self.J = J
+        self.p = p
+        self.P = P
+        self.R = R
+        self.T = T
+        self.C = C  # Cを故障確率として使用
+        self.RUB = RUB
+        n_var = len(J) * T
         super().__init__(n_var=n_var,
                          n_obj=1,
-                         n_constr=1,
-                         xl=0,
-                         xu=len(self.R),
+                         n_constr=len(P) + len(R) * T,
+                         xl=1,
+                         xu=len(R),
                          type_var=int)
 
     def _evaluate(self, x, out, *args, **kwargs):
-        finish_times = []
+        J, p, P, R, T, C, RUB = self.J, self.p, self.P, self.R, self.T, self.C, self.RUB
+        
+        x = x.reshape((x.shape[0], len(J), T))
+
+        total_work = np.array([[np.sum(xi[j] > 0) for j in range(len(J))] for xi in x])
+        finish_times = np.ceil(total_work / np.array([p[j+1] for j in range(len(J))])).astype(int)
+
+        total_cost = np.array([np.max(finish_times[i]) for i in range(x.shape[0])])
+
         constraints = []
-        
-        for ind in x:
-            schedule = ind.reshape((len(self.J), self.T))
-            leftover = copy.deepcopy(self.p)
-            resource_constraints = 0
-            failure_constraints = 0
-            precedence_constraints = 0
-            task_completion_constraints = 0
-            t = 0
-            task_end_times = {}
-            task_finish_time = {}
-        
-            for t in range(self.T):
-                n_worker = np.zeros(len(self.R))
-                for j in range(len(self.J)):
-                    robot = schedule[j, t]
-                    if robot != 0:
-                        n_worker[robot-1] += 1
-                        
-                        # ロボットの故障確率を考慮
-                        failure_probability = 1 - self.C * t
-                        if np.random.rand() > failure_probability:
-                            failure_constraints += 1  # 故障が発生した場合のペナルティ
-                            continue
-                    
-                        if leftover[self.J[j]] > 0:
-                            task_completion_constraints += 1  # タスクが完了していない場合のペナルティ
-                    
-                        n_worker[robot-1] += 1
-                        leftover[self.J[j]] -= 1
-                        if leftover[self.J[j]] <= 0:
-                            leftover[self.J[j]] = 0
-                            task_end_times[self.J[j]] = t + 1  # タスクが終了した時間を記録
-                            
-                for r in range(len(self.R)):
-                    if n_worker[robot-1] > 0:
-                        resource_constraints += 1  # 同じロボットに複数のタスクが割り当てられた場合のペナルティ
-                    if self.RUB[(r+1, t+1)] < n_worker[r]:
-                        resource_constraints += 1
-                        
-                # 順序制約を確認
-                for (x, y) in self.P:
-                    if task_finish_time.get(x, 0) >= task_finish_time.get(y, self.T + 1):
-                        precedence_constraints += 1  # 順序制約違反のペナルティ
+        failed_tasks = np.zeros_like(x)
 
-                if sum(leftover.values()) == 0:
-                    break
+        for i in range(x.shape[0]):
+            for t in range(T):
+                for j in range(len(J)):
+                    robot = int(x[i, j, t])
+                    if robot > 0:
+                        success_prob = (1 - C) ** t
+                        #print(f"Robot {robot} at time {t}, success_prob: {success_prob}")
+                        if np.random.random() > success_prob:
+                            x[i, j, t] = (1 - C)  
+                            failed_tasks[i, j, t] = 1  # Mark task as failed
+                            #print(f"Task {j} at time {t} failed. New value: {x[i, j, t]}")
+                        else:
+                            x[i, j, t] = 1  
 
-            finish_times.append(t + 1)
-            constraints.append(resource_constraints + failure_constraints + precedence_constraints + task_completion_constraints)
-            
-        out["F"] = np.array(finish_times).reshape(-1, 1)
-        out["G"] = np.array(constraints).reshape(-1, 1)
-        
-        
-        
-        #ロボットに対して同時間帯に2つ以上のタスクを割り振らないようにするのではなく
-        #タスクのIDが若い方を優先するようにする
+            precedence_constraints = [np.sum(x[i, k-1]) - np.sum(x[i, j-1]) for (j, k) in P]
+            constraints.append(precedence_constraints)
+
+        for t in range(T):
+            for r in range(1, len(R) + 1):
+                resource_constraints = [np.sum([xi[j, t] == r for j in range(len(J))]) - 1 for xi in x]
+                constraints.append(resource_constraints)
+
+        constraints = np.hstack(constraints)
+
+        out["F"] = total_cost
+        out["G"] = constraints
+        out["failed_tasks"] = failed_tasks  # Include failed tasks in the output
