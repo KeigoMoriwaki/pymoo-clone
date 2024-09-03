@@ -52,7 +52,7 @@ class ResourceConstrainedSchedulingProblem(Problem):
                         #print(f"Robot {robot} at time {t}, success_prob: {success_prob}")
                         if np.random.random() > success_prob:
                             x[i, j, t] = (1 - C)  
-                            failed_tasks[i, j, t] = 1  # Mark task as failed
+                            failed_tasks[i, j, t] = 1  # 故障判定時、failed_tasksをカウントする。
                             #print(f"Task {j} at time {t} failed. New value: {x[i, j, t]}")
                         else:
                             x[i, j, t] = 1  
