@@ -21,7 +21,7 @@ def plot_schedule(result, J, R, T):
             if schedule[j, t] > 0:
                 robot = int(np.ceil(schedule[j, t]))
                 face_color = colors(j)
-                text_color = 'white' if failed_tasks[j, t] == 1 else 'black'  # タスクの仕事量が1未満の場合、故障と見なす
+                text_color = 'white' if failed_tasks[j, t] == 1 else 'black'  # 故障でタスクが失敗した場合、ラベルを白色に。それ以外は黒色。
                 ax.broken_barh([(t, 1)], (robot - 1, 1), facecolors=(face_color))
                 ax.text(t + 0.5, robot - 0.5, f"J{J[j]}", ha='center', va='center', color=text_color)
     
