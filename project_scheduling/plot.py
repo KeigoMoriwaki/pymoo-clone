@@ -31,3 +31,4 @@ def plot_schedule(result, J, R, T):
     ax.set_yticklabels([f'R{r}' for r in R])
     ax.set_xticks(np.arange(T + 1))
     plt.show()
+    

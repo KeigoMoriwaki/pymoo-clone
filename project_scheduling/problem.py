@@ -5,7 +5,7 @@ Created on Sat May 25 10:32:04 2024
 @author: k5kei
 """
 
-import numpy as np
+import numpy as np 
 from pymoo.core.problem import Problem
 
 class ResourceConstrainedSchedulingProblem(Problem):
