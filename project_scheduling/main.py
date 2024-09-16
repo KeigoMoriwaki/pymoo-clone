@@ -17,9 +17,11 @@ def main():
     J, p, P, R, T, C, RUB = problem_data
     
     result = solve_problem(problem_data)
+    #print(result)  # ここでresultが正しく得られているか確認する
     
     J, p, P, R, T, C, RUB = problem_data  # `C` の読み込み修正
     plot_schedule(result, J, R, T)
+    
 
 if __name__ == "__main__":
     main()
