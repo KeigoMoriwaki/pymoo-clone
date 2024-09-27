@@ -23,10 +23,10 @@ class ResourceConstrainedSchedulingProblem(Problem):
         self.T = T
         self.C = C  # Cを故障確率として使用
         self.RUB = RUB
-        n_var = len(J) * T
+        n_var = len(R) * T
         super().__init__(n_var=n_var,
                          n_obj=1,
-                         n_constr=len(P) + len(R) * T,
+                         #n_constr=len(P) + len(R) * T,
                          xl=1,
                          xu=len(R),
                          type_var=int)
@@ -44,7 +44,7 @@ class ResourceConstrainedSchedulingProblem(Problem):
         #print(f"x: {x}")
         
         #print(f"x.shape before reshape: {x.shape}")
-        x = x.reshape((x.shape[0], len(J), T))
+        x = x.reshape((x.shape[0], len(R), T))
         #print(f"x.shape after reshape: {x.shape}")
 
 
@@ -53,41 +53,46 @@ class ResourceConstrainedSchedulingProblem(Problem):
 
         for i in range(x.shape[0]):
             #w = np.zeros_like(x[i])  # 仕事量の変数を新たに定義
-            total_workload = np.zeros(len(J))  # 各タスクの合計仕事量
-            task_completion_time = np.zeros(len(J))  # タスクの完了時間
+            workload = np.zeros(len(J))  # 各タスクの合計仕事量
+            task_completed = np.zeros(len(J))  # タスクの完了時間
             
             for t in range(T):
-                for j in range(len(J)):
-                    robot = int(x[i, j, t])
+                for r in range(len(R)):
+                    robot = int(x[i, r, t])
+
                     if robot > 0:
+                        # w(x(t,r)) として仕事量を定義
+                        work = 1  # 初期仕事量を1と設定
+
+                        # 順序制約を確認
+                        for (pred_task, succ_task) in P:
+                            if task_completed[pred_task - 1] < 1 and robot == succ_task:
+                                work = 0  # 順序制約に違反した場合、仕事量を0に設定
+
+                        # 故障確率の判定
                         success_prob = (1 - C) ** t
-                        #print(f"Robot {robot} at time {t}, success_prob: {success_prob}")
                         if np.random.random() > success_prob:
-                            x[i, j, t] = (1 - C)  
-                            failed_tasks[i, j, t] = 1  # 故障判定時、failed_tasksをカウントする。
-                            #print(f"Task {j} at time {t} failed. New value: {x[i, j, t]}")
-                        else:
-                            x[i, j, t] = 1  
-                            
-                    # ここで順序制約を確認
-                    for (x, y) in P:
-                        # 先行タスクが完了していない場合、後続タスク y の仕事量を 0 にする
-                        if total_workload[x - 1] < p[x]:
-                            if y - 1 == j:
-                                x[i, j, t] = 0  # 後続タスク y の仕事量を 0 にする
-                    
-                # タスクの合計仕事量を更新
-                for j in range(len(J)):
-                    total_workload[j] += x[i, j, t]  # タスクjの仕事量を合算
+                            work = 0  # 故障時に仕事量を0に設定
+                            failed_tasks[i, r, t] = 1
 
+                        # タスクが順序制約を満たし、故障していない場合、仕事量をworkloadに反映
+                        for j in range(len(J)):
+                            if robot == J[j]:
+                                workload[j] += work
 
-            # タスクが完了しているかどうかを確認
+                        # 各タスクが完了しているかをチェック
+                        for j in range(len(J)):
+                            if workload[j] >= p[J[j]]:
+                                task_completed[j] = 1  # タスクが完了したらフラグを立てる
+
+            # 最後に全タスクの完了時間を計算
+            evaluation_value = 0
             for j in range(len(J)):
-                if total_workload[j] >= p[j + 1]:
-                    evaluation_value = t  # タスクが完了した最後の時間
+                if task_completed[j] == 1:
+                    evaluation_value += 1  # タスクが完了していれば評価値を加算
                 else:
-                # タスクが完了していない場合はTを使用
-                    evaluation_value = T + np.sum(np.maximum(0, p[j + 1] - total_workload[j]) for j in range(len(J)))
+                    # 未完了タスクのペナルティを計算
+                    evaluation_value += T + (p[J[j]] - workload[j])
 
             total_cost.append(evaluation_value)
             
