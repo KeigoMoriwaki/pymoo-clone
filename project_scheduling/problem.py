@@ -28,7 +28,7 @@ class ResourceConstrainedSchedulingProblem(Problem):
                          n_obj=1,
                          #n_constr=len(P) + len(R) * T,
                          xl=1,
-                         xu=len(R),
+                         xu=len(J),
                          type_var=int)
 
     def _evaluate(self, x, out, *args, **kwargs):
