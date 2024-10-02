@@ -33,28 +33,15 @@ class ResourceConstrainedSchedulingProblem(Problem):
 
     def _evaluate(self, x, out, *args, **kwargs):
         J, p, P, R, T, C, RUB = self.J, self.p, self.P, self.R, self.T, self.C, self.RUB
-        
-        #print(f"J: {J}")
-        #print(f"p: {p}")
-        #print(f"P: {P}")
-        #print(f"R: {R}")
-        #print(f"T: {T}")
-        #print(f"C: {C}")
-        #print(f"RUB: {RUB}")
-        #print(f"x: {x}")
-        
-        #print(f"x.shape before reshape: {x.shape}")
+
         x = x.reshape((x.shape[0], len(R), T))
-        #print(f"x.shape after reshape: {x.shape}")
 
-
-        total_cost = []
+        total_time = []
         failed_tasks = np.zeros_like(x)
 
         for i in range(x.shape[0]):
-            #w = np.zeros_like(x[i])  # 仕事量の変数を新たに定義
             workload = np.zeros(len(J))  # 各タスクの合計仕事量
-            task_completed = np.zeros(len(J))  # タスクの完了時間
+            task_completed = np.zeros(len(J))
             
             for t in range(T):
                 for r in range(len(R)):
@@ -66,9 +53,11 @@ class ResourceConstrainedSchedulingProblem(Problem):
 
                         # 順序制約を確認
                         for (pred_task, succ_task) in P:
-                            if task_completed[pred_task - 1] < 1 and task == succ_task:
-                                work = 0  # 順序制約に違反した場合、仕事量を0に設定
-
+                            if task > 0:  # タスクが割り当てられている場合
+                                if workload[pred_task - 1] < p[pred_task]:  # 順序制約を確認
+                                    if task == succ_task:
+                                        work = 0  # 順序制約に違反した場合、仕事量を0に設定
+                                        
                         # 故障確率の判定
                         success_prob = (1 - C) ** t
                         if np.random.random() > success_prob:
@@ -94,8 +83,8 @@ class ResourceConstrainedSchedulingProblem(Problem):
                     # 未完了タスクのペナルティを計算
                     evaluation_value += T + (p[J[j]] - workload[j])
 
-            total_cost.append(evaluation_value)
+            total_time.append(evaluation_value)
             
-        out["F"] = total_cost
+        out["F"] = total_time
         out["failed_tasks"] = failed_tasks  # 故障したタスクを結果に含める
         
