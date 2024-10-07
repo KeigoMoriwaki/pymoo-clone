@@ -15,7 +15,7 @@ class ResourceConstrainedSchedulingProblem(Problem):
         # Rがリストで、Tが整数であることを確認
         #print(f"Type of R: {type(R)}, Value of R: {R}")
         #print(f"Type of T: {type(T)}, Value of T: {T}")
-        print(f"Type of P: {type(P)}, Value of R: {P}")
+        #print(f"Type of P: {type(P)}, Value of R: {P}")
         self.J = J
         self.p = p
         self.P = P
@@ -42,6 +42,10 @@ class ResourceConstrainedSchedulingProblem(Problem):
         for i in range(x.shape[0]):
             workload = np.zeros(len(J))  # 各タスクの合計仕事量
             task_completed = np.zeros(len(J))
+            task_completion_time = np.full(len(J), -1)  # タスクの完了時間を初期化
+            
+            #print(f"--- Generation {i+1} ---")
+            #print(f"Initial workload: {workload}")
             
             for t in range(T):
                 for r in range(len(R)):
@@ -63,27 +67,41 @@ class ResourceConstrainedSchedulingProblem(Problem):
                         if np.random.random() > success_prob:
                             work = 0  # 故障時に仕事量を0に設定
                             failed_tasks[i, r, t] = 1
+                            #print(f"Robot {r+1} failed at time {t+1} for task {task}")
 
                         # タスクが順序制約を満たし、故障していない場合、仕事量をworkloadに反映
                         for j in range(len(J)):
                             if task == J[j]:
                                 workload[j] += work
+                               #print(f"Task {task} in progress by Robot {r+1} at time {t+1}: Workload = {workload[j]}/{p[J[j]]}")
 
-                        # 各タスクが完了しているかをチェック
-                        for j in range(len(J)):
-                            if workload[j] >= p[J[j]]:
-                                task_completed[j] = 1  # タスクが完了したらフラグを立てる
+
 
             # 最後に全タスクの完了時間を計算
             evaluation_value = 0
             for j in range(len(J)):
-                if task_completed[j] == 1:
-                    evaluation_value += t  # タスクが完了していれば評価値を加算
+                if workload[j] >= p[J[j]]:
+                    task_completed[j] = 1
+                    task_completion_time[j] = t
+                    #print(f"Task {J[j]} completed at time {task_completion_time[j]}")
                 else:
-                    # 未完了タスクのペナルティを計算
+                    # タスク未完了のペナルティ計算
                     evaluation_value += T + (p[J[j]] - workload[j])
+                    #print(f"Task {J[j]} incomplete: Workload = {workload[j]}/{p[J[j]]}")
+
+            # 全タスクの最大完了時間を評価値とする
+            if np.all(task_completed):
+                evaluation_value = np.max(task_completion_time)   # 最後のタスクの完了時間 +1
+                #print(f"All tasks completed by time {evaluation_value}")
+            else:
+                # 未完了タスクがある場合はペナルティ
+                for j in range(len(J)):
+                    if task_completed[j] == 0:
+                        evaluation_value += T + (p[J[j]] - workload[j])
+                #print(f"Penalty applied. Total evaluation value: {evaluation_value}")
 
             total_time.append(evaluation_value)
+
             
         out["F"] = total_time
         out["failed_tasks"] = failed_tasks  # 故障したタスクを結果に含める
