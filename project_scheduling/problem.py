@@ -10,7 +10,7 @@ from pymoo.core.problem import Problem
 
 class ResourceConstrainedSchedulingProblem(Problem):
 
-    def __init__(self, J, p, P, R, T, C, RUB):
+    def __init__(self, J, p, task_attributes, P, R, T, robot_capacities, C, RUB):
         #print(f"Debug: Inside class, J={J}, P={P}, R={R}, T={T}, p={p}, C={C}, RUB={RUB}")
         # Rがリストで、Tが整数であることを確認
         #print(f"Type of R: {type(R)}, Value of R: {R}")
@@ -18,11 +18,14 @@ class ResourceConstrainedSchedulingProblem(Problem):
         #print(f"Type of P: {type(P)}, Value of R: {P}")
         self.J = J
         self.p = p
+        self.task_attributes = task_attributes
         self.P = P
         self.R = R
         self.T = T
+        self.robot_capacities = robot_capacities
         self.C = C  # Cを故障確率として使用
         self.RUB = RUB
+        self.robot_types = list(robot_capacities.keys())  # 利用可能なロボットの種類リスト
         n_var = len(R) * T
         super().__init__(n_var=n_var,
                          n_obj=1,
@@ -32,7 +35,7 @@ class ResourceConstrainedSchedulingProblem(Problem):
                          type_var=int)
 
     def _evaluate(self, x, out, *args, **kwargs):
-        J, p, P, R, T, C, RUB = self.J, self.p, self.P, self.R, self.T, self.C, self.RUB
+        J, p, task_attributes, P, R, T, robot_capacities, C, RUB, robot_types = self.J, self.p, self.task_attributes, self.P, self.R, self.T, self.robot_capacities, self.C, self.RUB, self.robot_types
 
         x = x.reshape((x.shape[0], len(R), T))
 
@@ -47,13 +50,20 @@ class ResourceConstrainedSchedulingProblem(Problem):
             #print(f"--- Generation {i+1} ---")
             #print(f"Initial workload: {workload}")
             
+            # ランダムにロボットの種類を割り当て
+            robot_type_assignment = [np.random.choice(self.robot_types) for _ in R]
+            
+            print(f"--- Evaluation of Individual {i+1} ---")
+            print(f"Robot Type Assignment: {robot_type_assignment}")
+            
             for t in range(T):
                 for r in range(len(R)):
                     task = int(x[i, r, t])
 
                     if task > 0:
-                        # w(x(t,r)) として仕事量を定義
-                        work = 1  # 初期仕事量を1と設定
+                        task_attr = task_attributes[task]  # タスクの属性を取得
+                        robot_type = robot_type_assignment[r]  # 割り当てられたロボットの種類
+                        work = robot_capacities[robot_type][task_attr]  # 仕事量を取得
 
                         # 順序制約を確認
                         for (pred_task, succ_task) in P:
@@ -61,29 +71,30 @@ class ResourceConstrainedSchedulingProblem(Problem):
                                 if workload[pred_task - 1] < p[pred_task]:  # 順序制約を確認
                                     if task == succ_task:
                                         work = 0  # 順序制約に違反した場合、仕事量を0に設定
-                                        
+                                        #print(f"Order constraint prevents task {task} from progressing at time {t+1} by Robot {r+1}")
+
                         # 故障確率の判定
                         success_prob = (1 - C) ** t
                         if np.random.random() > success_prob:
                             work = 0  # 故障時に仕事量を0に設定
                             failed_tasks[i, r, t] = 1
-                            #print(f"Robot {r+1} failed at time {t+1} for task {task}")
+                            print(f"Robot {r+1} failed at time {t+1} for task {task}")
+
                             continue
 
                         # タスクが順序制約を満たし、故障していない場合、仕事量をworkloadに反映
                         for j in range(len(J)):
                             if task == J[j]:
                                 workload[j] += work
-                                #print(f"Task {task} in progress by Robot {r+1} at time {t+1}: Workload = {workload[j]}/{p[J[j]]}")
-                                
-                        # 各タスクが完了しているかをチェック
-                        for j in range(len(J)):
-                            if workload[j] >= p[J[j]]:
-                                task_completed[j] = 1  # タスクが完了したらフラグを立てる
-                                if task_completion_time[j] == -1:
-                                    task_completion_time[j] = t + 1  # 最初に完了した時刻を記録
-                                    #print(f"Task {J[j]} completed at time {task_completion_time[j]}")
+                                print(f"Task {task} (attribute: {task_attr}) executed by Robot {r+1} (type: {robot_type}) at time {t+1}: Workload = {workload[j]}/{p[task]}")
 
+                                
+                        # タスクが完了しているかをチェック
+                        if workload[task - 1] >= p[task]:
+                            task_completed[task - 1] = 1
+                            if task_completion_time[task - 1] == -1:
+                                task_completion_time[task - 1] = t + 1
+                                print(f"Task {task} completed at time {task_completion_time[task - 1]}")
 
             
 
@@ -91,13 +102,13 @@ class ResourceConstrainedSchedulingProblem(Problem):
             evaluation_value = 0
             if np.all(task_completed):
                 evaluation_value = np.max(task_completion_time)   # 最後のタスクの完了時間 +1
-                #print(f"All tasks completed by time {evaluation_value}")
+                print(f"All tasks completed by time {evaluation_value}")
             else:
                 # 未完了タスクがある場合はペナルティ
                 for j in range(len(J)):
                     if task_completed[j] == 0:
                         evaluation_value += T + (p[J[j]] - workload[j])
-                #print(f"Penalty applied. Total evaluation value: {evaluation_value}")
+                print(f"Penalty applied. Total evaluation value: {evaluation_value}")
 
             total_time.append(evaluation_value)
 

@@ -15,12 +15,12 @@ from plot import plot_schedule
 def main():
     problem_data = make_1r()
     
-    J, p, P, R, T, C, RUB = problem_data
+    J, p, task_attributes, P, R, T, robot_capacities, C, RUB = problem_data
     
     result = solve_problem(problem_data)
     #print(result)  # ここでresultが正しく得られているか確認する
     
-    J, p, P, R, T, C, RUB = problem_data  # `C` の読み込み修正
+    J, p, task_attributes, P, R, T, robot_capacities, C, RUB = problem_data  # `C` の読み込み修正
     plot_schedule(result, J, R, T)
     
 
