@@ -46,10 +46,7 @@ class ResourceConstrainedSchedulingProblem(Problem):
             workload = np.zeros(len(J))  # 各タスクの合計仕事量
             task_completed = np.zeros(len(J))
             task_completion_time = np.full(len(J), -1)  # タスクの完了時間を初期化
-            
-            #print(f"--- Generation {i+1} ---")
-            #print(f"Initial workload: {workload}")
-            
+
             # ランダムにロボットの種類を割り当て
             robot_type_assignment = [np.random.choice(self.robot_types) for _ in R]
             
@@ -101,8 +98,8 @@ class ResourceConstrainedSchedulingProblem(Problem):
             # 全タスクの最大完了時間を評価値とする
             evaluation_value = 0
             if np.all(task_completed):
-                evaluation_value = np.max(task_completion_time)   # 最後のタスクの完了時間 +1
-                print(f"All tasks completed by time {evaluation_value}")
+                evaluation_value = np.max(task_completion_time)
+                print(f"All tasks completed by evaluation_value {evaluation_value}")
             else:
                 # 未完了タスクがある場合はペナルティ
                 for j in range(len(J)):
