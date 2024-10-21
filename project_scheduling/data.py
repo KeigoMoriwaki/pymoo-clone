@@ -7,7 +7,7 @@ Created on Sat May 25 10:32:52 2024
 
 def make_1r():
     J = [1, 2, 3, 4]  # タスクID
-    p = {1: 12, 2: 9, 3: 6, 4: 6}  # 各タスクの仕事量
+    p = {1: 4, 2: 3, 3: 6, 4: 6}  # 各タスクの仕事量
     
     # 各タスクの属性 ('運搬' または '建設')
     task_attributes = {
@@ -20,17 +20,33 @@ def make_1r():
     #P = [[], [1, 2], [1, 3], [2, 4]]  # 各タスクの順序制約
     P = [(1, 2), (1, 3), (2, 4)]
     R = [1, 2, 3]  # 各ロボット種類のID
-    T = 6  # 総期間長
+    robot_types = {
+        1: 'TWSH',
+        2: 'QWDH',
+        3: 'Worm'
+    }
+    
+    T = 6  # 総期間長data.py
     
     # 各ロボットの種類ごとに、運搬と建設の仕事量
     robot_capacities = {
-        'TWSH': {'carry': 3, 'build': 3},
-        'TWDH': {'carry': 3, 'build': 5},
-        'QWSH': {'carry': 5, 'build': 3},
-        'QWDH': {'carry': 3, 'build': 5},
-        'Worm': {'carry': 1, 'build': 1},
-        'Hand': {'carry': 0, 'build': 1}
+        'TWSH': {'carry': 3, 'build': 3, 'move': 2},
+        'TWDH': {'carry': 3, 'build': 5, 'move': 2},
+        'QWSH': {'carry': 5, 'build': 3, 'move': 3},
+        'QWDH': {'carry': 3, 'build': 5, 'move': 3},
+        'Worm': {'carry': 1, 'build': 1, 'move': 1},
+        'Hand': {'carry': 0, 'build': 1, 'move': 0}
     }
+    
+    workspace = {1: '1', 2: '2', 3: '3', 4: '4'}
+    workspace_distance = {
+        '1': {'1': 0, '2': 1, '3': 2, '4': 3},
+        '2': {'1': 1, '2': 0, '3': 3, '4': 2},
+        '3': {'1': 2, '2': 3, '3': 0, '4': 1},
+        '4': {'1': 3, '2': 2, '3': 1, '4': 0}
+    }
+    
+    C = 0.1  # 故障確率の係数
     
     # 各期間ごとに仕事をスタートさせる費用，今回の問題では必要ない
     # c = {(j, t): 1 * (t - 1 + p[j]) for j in J for t in range(1, T - p[j] + 2)}
@@ -46,7 +62,6 @@ def make_1r():
     #     (4, 1, 1): 2,
     # }
     # 各期間ごとにどのロボットがどれだけ働けるか（各ロボットの台数）
-    C = 0.1  # 故障確率の係数
     RUB = {
         (1, 1): 2,
         (1, 2): 2,
@@ -71,4 +86,4 @@ def make_1r():
         (3, 7): 1,
     }
 
-    return J, p, task_attributes, P, R, T, robot_capacities, C, RUB
+    return J, p, task_attributes, P, R, robot_types, T, robot_capacities, workspace, workspace_distance, C, RUB

@@ -10,7 +10,7 @@ from pymoo.core.problem import Problem
 
 class ResourceConstrainedSchedulingProblem(Problem):
 
-    def __init__(self, J, p, task_attributes, P, R, T, robot_capacities, C, RUB):
+    def __init__(self, J, p, task_attributes, P, R, robot_types, T, robot_capacities, workspace, workspace_distance, C, RUB):
         #print(f"Debug: Inside class, J={J}, P={P}, R={R}, T={T}, p={p}, C={C}, RUB={RUB}")
         # Rがリストで、Tが整数であることを確認
         #print(f"Type of R: {type(R)}, Value of R: {R}")
@@ -21,11 +21,13 @@ class ResourceConstrainedSchedulingProblem(Problem):
         self.task_attributes = task_attributes
         self.P = P
         self.R = R
+        self.robot_types = robot_types
         self.T = T
         self.robot_capacities = robot_capacities
+        self.workspace = workspace
+        self.workspace_distance = workspace_distance
         self.C = C  # Cを故障確率として使用
         self.RUB = RUB
-        self.robot_types = list(robot_capacities.keys())  # 利用可能なロボットの種類リスト
         n_var = len(R) * T
         super().__init__(n_var=n_var,
                          n_obj=1,
@@ -35,32 +37,66 @@ class ResourceConstrainedSchedulingProblem(Problem):
                          type_var=int)
 
     def _evaluate(self, x, out, *args, **kwargs):
-        J, p, task_attributes, P, R, T, robot_capacities, C, RUB, robot_types = self.J, self.p, self.task_attributes, self.P, self.R, self.T, self.robot_capacities, self.C, self.RUB, self.robot_types
+        J, p, task_attributes, P, R, robot_types, T, robot_capacities, workspace, workspace_distance, C, RUB = self.J, self.p, self.task_attributes, self.P, self.R, self.robot_types, self.T, self.robot_capacities, self.workspace, self.workspace_distance, self.C, self.RUB
 
         x = x.reshape((x.shape[0], len(R), T))
 
         total_time = []
         failed_tasks = np.zeros_like(x)
+        moving_tasks = np.zeros_like(x)  # 移動を記録するための配列
 
         for i in range(x.shape[0]):
             workload = np.zeros(len(J))  # 各タスクの合計仕事量
             task_completed = np.zeros(len(J))
             task_completion_time = np.full(len(J), -1)  # タスクの完了時間を初期化
-
-            # ランダムにロボットの種類を割り当て
-            robot_type_assignment = [np.random.choice(self.robot_types) for _ in R]
             
             print(f"--- Evaluation of Individual {i+1} ---")
-            print(f"Robot Type Assignment: {robot_type_assignment}")
             
+            # 各ロボットの現在の workspace と移動残距離をトラッキング
+            current_workspace = {r: None for r in range(len(R))}
+            remaining_distance = {r: 0 for r in range(len(R))}  # 移動中の残り距離
+
             for t in range(T):
                 for r in range(len(R)):
                     task = int(x[i, r, t])
 
                     if task > 0:
                         task_attr = task_attributes[task]  # タスクの属性を取得
-                        robot_type = robot_type_assignment[r]  # 割り当てられたロボットの種類
+                        robot_type = robot_types[r + 1]    # ロボットの種類を取得
                         work = robot_capacities[robot_type][task_attr]  # 仕事量を取得
+                        task_workspace = workspace[task]  # タスクのworkspaceを取得
+
+                        # 初回のタスクの場合
+                        if current_workspace[r] is None:
+                            current_workspace[r] = task_workspace
+                            remaining_distance[r] = 0  # 初回のタスクでは移動不要
+
+                        # 前回のタスクと異なる場合、移動を行う必要がある
+                        elif current_workspace[r] != task_workspace:
+                            if remaining_distance[r] == 0:
+                                # 移動が必要な距離を計算
+                                remaining_distance[r] = workspace_distance[current_workspace[r]][task_workspace]
+                                print(f"Robot {r+1} starts moving from workspace {current_workspace[r]} to {task_workspace}. Total distance: {remaining_distance[r]}")
+                            
+                            move_capacity = robot_capacities[robot_type]['move']
+
+                            if remaining_distance[r] > 0:
+                                # 1期間で移動できる距離が足りない場合、移動を続ける
+                                if remaining_distance[r] > move_capacity:
+                                    remaining_distance[r] -= move_capacity
+                                    moving_tasks[i, r, t] = 1  # 移動中のフラグを立てる
+                                    print(f"Robot {r+1} is moving. Remaining distance: {remaining_distance[r]} at time {t+1}")
+                                    continue  # この期間はタスク実行なし
+                                else:
+                                    # 移動が完了
+                                    current_workspace[r] = task_workspace
+                                    remaining_distance[r] = 0
+                                    moving_tasks[i, r, t] = 1  # 移動中のフラグを立てる
+                                    print(f"Robot {r+1} completed moving to workspace {task_workspace} at time {t+1}")
+                                    continue  # この期間はタスク実行なし
+                            else:
+                                current_workspace[r] = task_workspace
+                                continue
 
                         # 順序制約を確認
                         for (pred_task, succ_task) in P:
@@ -101,15 +137,20 @@ class ResourceConstrainedSchedulingProblem(Problem):
                 evaluation_value = np.max(task_completion_time)
                 print(f"All tasks completed by evaluation_value {evaluation_value}")
             else:
-                # 未完了タスクがある場合はペナルティ
+                # 未完了タスクがある場合は、まずTを加算する
+                evaluation_value += T
+                print(f"Some tasks are incomplete. Base evaluation value: {evaluation_value}")
+    
+                # 残りの仕事量を合算する
                 for j in range(len(J)):
                     if task_completed[j] == 0:
-                        evaluation_value += T + (p[J[j]] - workload[j])
-                print(f"Penalty applied. Total evaluation value: {evaluation_value}")
+                        remaining_workload = p[J[j]] - workload[j]
+                        evaluation_value += remaining_workload  # 残り仕事量のみを追加
+                        print(f"Task {J[j]} is incomplete. Remaining workload: {remaining_workload}. Total evaluation value now: {evaluation_value}")
 
             total_time.append(evaluation_value)
 
             
         out["F"] = total_time
         out["failed_tasks"] = failed_tasks  # 故障したタスクを結果に含める
-        
+        out["moving_tasks"] = moving_tasks  # 移動中の情報を追加
