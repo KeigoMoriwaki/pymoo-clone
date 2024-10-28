@@ -15,10 +15,10 @@ from problem import ResourceConstrainedSchedulingProblem
 
 
 def solve_problem(problem_data):
-    J, p, task_attributes, P, R, robot_types, T, robot_capacities, workspace, workspace_distance, C, RUB = problem_data
+    J, p, task_attributes, P, R, robot_types, T, robot_capacities, workspace, workspace_distance, robot_initial_positions, C, RUB = problem_data
     
-    problem = ResourceConstrainedSchedulingProblem(J, p, task_attributes, P, R, robot_types, T, robot_capacities, workspace, workspace_distance, C, RUB)
-    algorithm = GA(pop_size=500,
+    problem = ResourceConstrainedSchedulingProblem(J, p, task_attributes, P, R, robot_types, T, robot_capacities, workspace, workspace_distance, robot_initial_positions, C, RUB)
+    algorithm = GA(pop_size=300,
                    sampling=IntegerRandomSampling(),
                    mutation=PM(prob=1.0, eta=3.0, vtype=float, repair=RoundingRepair()),
                    crossover=SBX(prob=1.0, eta=3.0, vtype=float, repair=RoundingRepair()),
