@@ -29,7 +29,7 @@ def make_1r():
     T = 60  # 総期間長data.py
     
     # 各ロボットの種類ごとに、運搬と建設の仕事量
-    robot_capacities = {
+    robot_abilities = {
         'TWSH': {'carry': 3, 'build': 3, 'move': 2},
         'TWDH': {'carry': 3, 'build': 5, 'move': 2},
         'QWSH': {'carry': 5, 'build': 3, 'move': 3},
@@ -89,4 +89,4 @@ def make_1r():
         (3, 7): 1,
     }
 
-    return J, p, task_attributes, P, R, robot_types, T, robot_capacities, workspace, workspace_distance, robot_initial_positions, C, RUB
+    return J, p, task_attributes, P, R, robot_types, T, robot_abilities, workspace, workspace_distance, robot_initial_positions, C, RUB

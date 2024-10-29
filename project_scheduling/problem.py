@@ -10,7 +10,7 @@ from pymoo.core.problem import Problem
 
 class ResourceConstrainedSchedulingProblem(Problem):
 
-    def __init__(self, J, p, task_attributes, P, R, robot_types, T, robot_capacities, workspace, workspace_distance, robot_initial_positions, C, RUB):
+    def __init__(self, J, p, task_attributes, P, R, robot_types, T, robot_abilities, workspace, workspace_distance, robot_initial_positions, C, RUB):
         #print(f"Debug: Inside class, J={J}, P={P}, R={R}, T={T}, p={p}, C={C}, RUB={RUB}")
         # Rがリストで、Tが整数であることを確認
         #print(f"Type of R: {type(R)}, Value of R: {R}")
@@ -23,7 +23,7 @@ class ResourceConstrainedSchedulingProblem(Problem):
         self.R = R
         self.robot_types = robot_types
         self.T = T
-        self.robot_capacities = robot_capacities
+        self.robot_abilities = robot_abilities
         self.workspace = workspace
         self.workspace_distance = workspace_distance
         self.robot_initial_positions = robot_initial_positions
@@ -38,7 +38,7 @@ class ResourceConstrainedSchedulingProblem(Problem):
                          type_var=int)
 
     def _evaluate(self, x, out, *args, **kwargs):
-        J, p, task_attributes, P, R, robot_types, T, robot_capacities, workspace, workspace_distance, robot_initial_positions, C, RUB = self.J, self.p, self.task_attributes, self.P, self.R, self.robot_types, self.T, self.robot_capacities, self.workspace, self.workspace_distance, self.robot_initial_positions, self.C, self.RUB
+        J, p, task_attributes, P, R, robot_types, T, robot_abilities, workspace, workspace_distance, robot_initial_positions, C, RUB = self.J, self.p, self.task_attributes, self.P, self.R, self.robot_types, self.T, self.robot_abilities, self.workspace, self.workspace_distance, self.robot_initial_positions, self.C, self.RUB
 
         x = x.reshape((x.shape[0], len(R), T))
 
@@ -73,7 +73,7 @@ class ResourceConstrainedSchedulingProblem(Problem):
                     if task > 0:
                         task_attr = task_attributes[task]  # タスクの属性を取得
                         robot_type = robot_types[r + 1]    # ロボットの種類を取得
-                        work = robot_capacities[robot_type][task_attr]  # 仕事量を取得
+                        work = robot_abilities[robot_type][task_attr]  # 仕事量を取得
                         task_workspace = workspace[task]  # タスクのworkspaceを取得
 
                         # タスクIDが前回と同じ場合、移動なしで作業を続行
@@ -85,12 +85,12 @@ class ResourceConstrainedSchedulingProblem(Problem):
                                 remaining_distance[r] = workspace_distance[current_workspace[r]][task_workspace]
 
                             # 移動可能距離を取得
-                            move_capacity = robot_capacities[robot_type]['move']
+                            move_ability = robot_abilities[robot_type]['move']
 
                             # 移動が完了していない場合は移動続行
                             if remaining_distance[r] > 0:
-                                if remaining_distance[r] > move_capacity:
-                                    remaining_distance[r] -= move_capacity
+                                if remaining_distance[r] > move_ability:
+                                    remaining_distance[r] -= move_ability
                                     moving_tasks[i, r, t] = 1  # 移動中のフラグを設定
                                     continue  # 移動中はタスクを実行しない
                                 else:
