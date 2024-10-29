@@ -57,7 +57,8 @@ def plot_schedule(result, J, R, T, robot_types):
     ax.set_yticks(np.arange(len(R)) + 0.5)
     ax.set_yticklabels([f'R{r} ({robot_types[r]})' for r in R])
     
-    # x軸の目盛りを10刻みに設定
-    ax.set_xticks(np.arange(0, T + 1, 10))
+    # x軸の目盛りを10刻みで設定し、そのラベルを1/10にした表示に変更
+    ax.set_xticks(np.arange(0, T + 1, 10))  # 0から60まで10刻みで配置
+    ax.set_xticklabels([str(x // 10) for x in np.arange(0, T + 1, 10)])  # 表示上のラベルを1/10にする
 
     plt.show()
