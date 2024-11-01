@@ -62,3 +62,14 @@ def plot_schedule(result, J, R, T, robot_types):
     ax.set_xticklabels([str(x // 10) for x in np.arange(0, T + 1, 10)])  # 表示上のラベルを1/10にする
 
     plt.show()
+    
+    
+def plot_fitness_over_generations(min_fitness_over_gens):
+    plt.figure(figsize=(10, 6))
+    plt.plot(min_fitness_over_gens, color='b', label='Minimum Fitness')
+    plt.xlabel('Generation')
+    plt.ylabel('Minimum Evaluation Value')
+    plt.title('Fitness Over Generations')
+    plt.legend()
+    plt.grid(True)
+    plt.show()
