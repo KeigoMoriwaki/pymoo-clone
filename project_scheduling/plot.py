@@ -43,8 +43,12 @@ def plot_schedule(result, J, R, T, robot_types):
                 ax.broken_barh([(t, 1)], (r, 1), facecolors=(face_color))
                 if failed_tasks[r, t] == 1:
                     # 故障時に細い白線を重ねる
-                    ax.plot([t, t+1], [r+0.5, r+0.5], color='white', linewidth=5)
+                    ax.plot([t+0.2, t+0.8], [r+0.5, r+0.5], color='white', linewidth=5)
                 # ax.text(t + 0.5, r + 0.5, f"T{int(task_id)}", ha='center', va='center', color=text_color)  # タスクIDを表示
+
+    # 内部の縦線を追加
+    for t in range(T + 1):  # T + 1とすることで終端にも線を追加
+        ax.vlines(t, ymin=0, ymax=len(R), colors='gray', linestyles='dotted', linewidth=0.5)
 
     # 凡例を追加
     legend_labels = [f"T{int(j)}" for j in range(1, len(J) + 1)]
@@ -64,12 +68,12 @@ def plot_schedule(result, J, R, T, robot_types):
     plt.show()
     
     
-def plot_fitness_over_generations(min_fitness_over_gens):
+def plot_value_over_generations(min_value_over_gens):
     plt.figure(figsize=(10, 6))
-    plt.plot(min_fitness_over_gens, color='b', label='Minimum Fitness')
+    plt.plot(min_value_over_gens, color='b', label='Minimum Value')
     plt.xlabel('Generation')
     plt.ylabel('Minimum Evaluation Value')
-    plt.title('Fitness Over Generations')
+    plt.title('Value Over Generations')
     plt.legend()
     plt.grid(True)
     plt.show()

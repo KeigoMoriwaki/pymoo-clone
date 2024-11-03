@@ -29,14 +29,14 @@ def solve_problem(problem_data):
     )
     
     # 各世代ごとの最小評価値を記録するためのリストを作成
-    min_fitness_over_gens = []
+    min_value_over_gens = []
 
     # 最適化のコールバック関数を定義して世代ごとに最小評価値を記録
-    def record_min_fitness(algorithm):
-        gen_min_fitness = algorithm.pop.get("F").min()  # 現在の世代の最小評価値を取得
-        min_fitness_over_gens.append(gen_min_fitness)    # リストに追加
+    def record_min_value(algorithm):
+        gen_min_value = algorithm.pop.get("F").min()  # 現在の世代の最小評価値を取得
+        min_value_over_gens.append(gen_min_value)    # リストに追加
 
     # 最適化を実行し、コールバック関数を利用してデータ収集
-    result = minimize(problem, algorithm, ('n_gen', 300), verbose=True, callback=record_min_fitness)
+    result = minimize(problem, algorithm, ('n_gen', 300), verbose=True, callback=record_min_value)
 
-    return result, min_fitness_over_gens  # 最適化結果と最小評価値のリストを返す
+    return result, min_value_over_gens  # 最適化結果と最小評価値のリストを返す

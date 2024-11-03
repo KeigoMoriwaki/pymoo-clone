@@ -56,25 +56,37 @@ class ResourceConstrainedSchedulingProblem(Problem):
             # 各ロボットの現在位置を初期位置に設定
             current_workspace = {r: self.robot_initial_positions[r + 1] for r in range(len(self.R))}
             remaining_distance = {r: 0 for r in range(len(R))}  # 移動中の残り距離
-            reserved_tasks = {r: None for r in range(len(R))}  # 各ロボットが次に実行するタスクを保持
+
 
 
             for t in range(T):
                 for r in range(len(R)):
-                    # 予約されたタスクがある場合、そのタスクを実行する
-                    if reserved_tasks[r] is not None:
-                        task = reserved_tasks[r]
-                        reserved_tasks[r] = None  # タスクを実行するため予約をリセット
-                        print(f"Robot {r+1} is executing reserved task {task} at time {t+1}")
+                    # 移動中であるかを確認し、移動が完了していない場合はタスク実行をスキップ
+                    if remaining_distance[r] > 0:
+                        move_ability = robot_abilities[robot_types[r + 1]]['move']
+                        if remaining_distance[r] > move_ability:
+                            remaining_distance[r] -= move_ability
+                            moving_tasks[i, r, t] = 1  # 移動中フラグを設定
+                            print(f"[Time {t+1}] Robot {r+1} is moving, remaining distance: {remaining_distance[r]}.")
+                            continue  # 移動中はタスクを実行しない
+                        else:
+                            # 移動が完了した場合
+                            current_workspace[r] = workspace[int(x[i, r, t])]  # 移動先のワークスペースに更新
+                            remaining_distance[r] = 0
+                            moving_tasks[i, r, t] = 1  # 移動完了フラグ
+                            print(f"[Time {t+1}] Robot {r+1} completed move to workspace {current_workspace[r]}.")
+                            continue  # 移動が完了した時点でタスクを実行せず、次のステップへ
+        
         
                     else:
-                        task = int(x[i, r, t])  # 通常のタスク割り当てを取得
+                        # 通常のタスク割り当てを取得
+                        task = int(x[i, r, t])
 
                     if task > 0:
                         task_attr = task_attributes[task]  # タスクの属性を取得
                         robot_type = robot_types[r + 1]    # ロボットの種類を取得
                         work = robot_abilities[robot_type][task_attr]  # 仕事量を取得
-                        task_workspace = workspace[task]  # タスクのworkspaceを取得
+                        task_workspace = workspace[task]  # タスクのworkspaceを取得z
 
                         # タスクIDが前回と同じ場合、移動なしで作業を続行
                         if current_workspace[r] == task_workspace:
