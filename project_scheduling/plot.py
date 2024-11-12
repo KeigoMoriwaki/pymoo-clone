@@ -49,12 +49,12 @@ def plot_schedule(result, J, R, T, robot_types):
                 ax.broken_barh([(t, 1)], (r, 1), facecolors=(face_color))
                 if failed_tasks[r, t] == 1:
                     # 故障時に細い白線を重ねる
-                    ax.plot([t, t+1], [r+0.5, r+0.5], color='white', linewidth=5)
+                    ax.plot([t+0.007, t+1], [r+0.5, r+0.5], color='white', linewidth=5)
                     #ax.text(t + 0.5, r + 0.5, f"T{int(task_id)}", ha='center', va='center', color=text_color)  # タスクIDを表示
 
     # 内部の縦線を追加
-    #for t in range(T + 1):  # T + 1とすることで終端にも線を追加
-        #ax.vlines(t, ymin=0, ymax=len(R), colors='gray', linestyles='dotted', linewidth=0.5)
+    for t in range(T + 1):  # T + 1とすることで終端にも線を追加
+        ax.vlines(t, ymin=0, ymax=len(R), colors='gray', linestyles='dotted', linewidth=0.5)
 
     # 凡例を追加
     legend_labels = [f"T{int(j)}" for j in range(1, len(J) + 1)]
@@ -68,7 +68,9 @@ def plot_schedule(result, J, R, T, robot_types):
     ax.set_yticklabels([f'R{r} ({robot_types[r]})' for r in R])
     
     # x軸の目盛りを10刻みで設定し、そのラベルを1/10にした表示に変更
-    ax.set_xticks(np.arange(T + 1))
+    ax.set_xticks(np.arange(0, T + 1, 10))  # 0から60まで10刻みで配置
+    ax.set_xticklabels([str(x // 10) for x in np.arange(0, T + 1, 10)])  # 表示上のラベルを1/10にする
+
 
     plt.show()
     
