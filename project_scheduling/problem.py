@@ -65,6 +65,26 @@ class ResourceConstrainedSchedulingProblem(Problem):
 
             for t in range(T):
                 for r in range(len(R)):
+                    # 移動中であるかを確認し、移動が完了していない場合はタスク実行をスキップ
+                    #if remaining_distance[r] > 0:
+                        #move_ability = robot_abilities[robot_types[r + 1]]['move']
+                        #if remaining_distance[r] > move_ability:
+                            #remaining_distance[r] -= move_ability
+                            #moving_tasks[i, r, t] = 1  # 移動中フラグを設定
+                            #print(f"[Time {t+1}] Robot {r+1} is moving, remaining distance: {remaining_distance[r]}.")
+                            #continue  # 移動中はタスクを実行しない
+                        #else:
+                            # 移動が完了した場合
+                            #"remaining_distance[r] -= move_ability
+                            #current_workspace[r] = workspace[int(x[i, r, t])]  # 移動先のワークスペースに更新
+                            #remaining_distance[r] = 0
+                            #moving_tasks[i, r, t] = 1  # 移動完了フラグ
+                            #print(f"[Time {t+1}] Robot {r+1} completed move to workspace {current_workspace[r]}.")
+                            #continue  # 移動が完了した時点でタスクを実行せず、次のステップへ
+        
+        
+                    #else:
+                        # 通常のタスク割り当てを取得
                     task = int(x[i, r, t])
 
                     if task > 0:
@@ -92,7 +112,7 @@ class ResourceConstrainedSchedulingProblem(Problem):
                                 print(f"[Time {t+1}] Robot {r+1} is moving, remaining distance: {remaining_distance[r]}.")
                                 continue  # 移動中はタスクを実行しない
                             
-                            else:
+                            elif remaining_distance[r] == 0:
                                 # 移動完了（remaining_distanceが0の場合）
                                 current_workspace[r] = task_workspace
                                 remaining_distance[r] = 0  # 念のためremaining_distanceを0に設定
@@ -100,7 +120,14 @@ class ResourceConstrainedSchedulingProblem(Problem):
                                 print(f"[Time {t+1}] Robot {r+1} completed move to workspace {current_workspace[r]}.")
                                 continue  # 移動が完了した時間ではタスクを実行しない
                             
-
+                            elif remaining_distance[r] < 0:
+                                # 移動完了（remaining_distanceが0以下の場合）、タスクを実行可能
+                                current_workspace[r] = task_workspace
+                                half_task_flag[i, r, t] = 1  # half_task_flag を設定
+                                print(f"[Time {t+1}] Robot {r+1} completed move to workspace {current_workspace[r]}, task execution with reduced workload.")
+                            
+                                # ここで仕事量を半分にする
+                                work = work / 2
 
                         # 順序制約を確認
                         for (pred_task, succ_task) in P:
@@ -137,18 +164,18 @@ class ResourceConstrainedSchedulingProblem(Problem):
             # 全タスクの最大完了時間を評価値とする
             evaluation_value = 0
             if np.all(task_completed):
-                evaluation_value = np.max(task_completion_time) / 10
+                evaluation_value = np.max(task_completion_time)
                 print(f"All tasks completed by evaluation_value {evaluation_value}")
             else:
                 # 未完了タスクがある場合は、まずTを加算する
-                evaluation_value += T / 10
+                evaluation_value += T
                 print(f"Some tasks are incomplete. Base evaluation value: {evaluation_value}")
     
                 # 残りの仕事量を合算する
                 for j in range(len(J)):
                     if task_completed[j] == 0:
-                        remaining_workload = p[J[j]] - workload[j] 
-                        evaluation_value += remaining_workload /10   # 残り仕事量のみを追加
+                        remaining_workload = p[J[j]] - workload[j]
+                        evaluation_value += remaining_workload   # 残り仕事量のみを追加
                         print(f"Task {J[j]} is incomplete. Remaining workload: {remaining_workload}. Total evaluation value now: {evaluation_value}")
 
             total_time.append(evaluation_value)
