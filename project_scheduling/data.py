@@ -6,50 +6,81 @@ Created on Sat May 25 10:32:52 2024
 """
 
 def make_1r():
-    J = [1, 2, 3, 4]  # タスクID
-    p = {1: 4, 2: 3, 3: 6, 4: 6}  # 各タスクの仕事量
+    J = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]  # タスクID
+    p = {1: 12, 2: 6, 3: 10, 4: 3, 5: 3, 6: 3, 7: 3, 8: 3, 9: 3, 10: 3, 11: 3, 12: 5, 13: 5, 14: 4, 15: 4, 16: 5, 17: 8}  # 各タスクの仕事量
     
     # 各タスクの属性 ('運搬' または '建設')
     task_attributes = {
         1: 'carry',
-        2: 'carry',
+        2: 'build',
         3: 'build',
-        4: 'build'
+        4: 'carry',
+        5: 'carry',
+        6: 'carry',
+        7: 'carry',
+        8: 'build',
+        9: 'build',
+        10: 'build',
+        11: 'build',
+        12: 'build',
+        13: 'build',
+        14: 'carry',
+        15: 'carry',
+        16: 'build',
+        17: 'build'
     }
     
     #P = [[], [1, 2], [1, 3], [2, 4]]  # 各タスクの順序制約
-    P = [(1, 2), (1, 3), (2, 4)]
-    R = [1, 2, 3]  # 各ロボット種類のID
+    P = [(1, 2), (2, 3), (4, 8), (5, 9), (6, 10), (7, 11), (14, 16), (15, 17)]
+    
+    R = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]  # 各ロボット種類のID
     robot_types = {
         1: 'TWSH',
-        2: 'QWDH',
-        3: 'Worm'
+        2: 'TWDH',
+        3: 'TWDH',
+        4: 'QWSH',
+        5: 'QWSH',
+        6: 'QWDH',
+        7: 'Dragon',
+        8: 'Minimal',
+        9: 'Minimal',
+        10: 'Minimal',
+        11: 'Minimal',
+        12: 'Minimal',
+        13: 'Minimal',
+        14: 'Minimal'
     }
     
     T = 6  # 総期間長data.py
     
     # 各ロボットの種類ごとに、運搬と建設の仕事量
     robot_abilities = {
-        'TWSH': {'carry': 3, 'build': 3, 'move': 2},
-        'TWDH': {'carry': 3, 'build': 5, 'move': 2},
-        'QWSH': {'carry': 5, 'build': 3, 'move': 3},
-        'QWDH': {'carry': 5, 'build': 5, 'move': 3},
-        'Worm': {'carry': 1, 'build': 1, 'move': 2},
-        'Hand': {'carry': 1, 'build': 1, 'move': 1}
+        'TWSH': {'carry': 3, 'build': 3, 'move': 3},
+        'TWDH': {'carry': 3, 'build': 5, 'move': 3},
+        'QWSH': {'carry': 4, 'build': 3, 'move': 3},
+        'QWDH': {'carry': 4, 'build': 5, 'move': 3},
+        'Dragon': {'carry': 1, 'build': 3, 'move': 2},
+        'Minimal': {'carry': 1, 'build': 3, 'move': 1}
     }
     
-    workspace = {1: '1', 2: '2', 3: '3', 4: '4'}
+    workspace = {1: '1', 2: '2', 3: '2', 4: '1', 5: '1', 6: '1', 7: '1', 8: '3', 9: '3', 10: '3', 11: '3', 12: '3', 13: '3', 14: '1', 15: '1', 16: '4', 17: '4'}
     workspace_distance = {
-        '1': {'1': 0, '2': 1, '3': 2, '4': 3},
-        '2': {'1': 1, '2': 0, '3': 3, '4': 2},
-        '3': {'1': 2, '2': 3, '3': 0, '4': 1},
-        '4': {'1': 3, '2': 2, '3': 1, '4': 0}
+        '1': {'1': 0, '2': 7, '3': 5, '4': 7},
+        '2': {'1': 7, '2': 0, '3': 5, '4': 14},
+        '3': {'1': 5, '2': 5, '3': 0, '4': 11},
+        '4': {'1': 7, '2': 14, '3': 11, '4': 0}
+    }
+    moving_cost = {
+        '1': {'1': 0, '2': 0.35, '3': 0.25, '4': 0.35},
+        '2': {'1': 0.35, '2': 0, '3': 0.25, '4': 0.7},
+        '3': {'1': 0.25, '2': 0.25, '3': 0, '4': 0.55},
+        '4': {'1': 0.35, '2': 0.7, '3': 0.55, '4': 0}
     }
     
     # 各ロボットの初期位置を設定する辞書
-    robot_initial_positions = {1: '1', 2: '1', 3: '1'}
+    robot_initial_positions = {1: '1', 2: '1', 3: '1', 4: '1', 5: '1', 6: '1', 7: '1', 8: '1', 9: '1', 10: '1', 11: '1', 12: '1', 13: '1', 14: '1'}
     
-    C = 0.5  # 故障確率の係数
+    C = 0.1  # 故障確率の係数
     
     # 各期間ごとに仕事をスタートさせる費用，今回の問題では必要ない
     # c = {(j, t): 1 * (t - 1 + p[j]) for j in J for t in range(1, T - p[j] + 2)}
@@ -89,4 +120,4 @@ def make_1r():
         (3, 7): 1,
     }
 
-    return J, p, task_attributes, P, R, robot_types, T, robot_abilities, workspace, workspace_distance, robot_initial_positions, C, RUB
+    return J, p, task_attributes, P, R, robot_types, T, robot_abilities, workspace, workspace_distance, moving_cost, robot_initial_positions, C, RUB

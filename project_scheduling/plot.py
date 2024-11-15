@@ -42,6 +42,7 @@ def plot_schedule(result, J, R, T, robot_types):
                 task_color = colors(int(task_id - 1))  # タスクIDに対応する色
                 ax.broken_barh([(t, 0.5)], (r, 1), facecolors='white')  # 左半分を白
                 ax.broken_barh([(t + 0.5, 0.5)], (r, 1), facecolors=(task_color))  # 右半分をタスクの色
+                ax.text(t + 0.5, r + 0.5, f"T{int(task_id)}", ha='center', va='center', color='black')
             
             elif task_id > 0:  # タスクが割り当てられている場合
                 face_color = colors(int(task_id - 1))  # タスクに対応する色
@@ -49,12 +50,14 @@ def plot_schedule(result, J, R, T, robot_types):
                 ax.broken_barh([(t, 1)], (r, 1), facecolors=(face_color))
                 if failed_tasks[r, t] == 1:
                     # 故障時に細い白線を重ねる
-                    ax.plot([t+0.007, t+1], [r+0.5, r+0.5], color='white', linewidth=5)
-                    #ax.text(t + 0.5, r + 0.5, f"T{int(task_id)}", ha='center', va='center', color=text_color)  # タスクIDを表示
+                    #ax.plot([t+0.005, t+0.975], [r+0.5, r+0.5], color='white', linewidth=1)
+                    ax.text(t + 0.5, r + 0.5, f"T{int(task_id)}", ha='center', va='center', color=text_color)  # タスクIDを表示
+                else:
+                    ax.text(t + 0.5, r + 0.5, f"T{int(task_id)}", ha='center', va='center', color='black')
 
     # 内部の縦線を追加
-    for t in range(T + 1):  # T + 1とすることで終端にも線を追加
-        ax.vlines(t, ymin=0, ymax=len(R), colors='gray', linestyles='dotted', linewidth=0.5)
+    #for t in range(T + 1):  # T + 1とすることで終端にも線を追加
+        #ax.vlines(t, ymin=0, ymax=len(R), colors='gray', linestyles='dotted', linewidth=0.5)
 
     # 凡例を追加
     legend_labels = [f"T{int(j)}" for j in range(1, len(J) + 1)]

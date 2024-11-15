@@ -11,12 +11,10 @@ import random  # シード管理用に追加
 
 class ResourceConstrainedSchedulingProblem(Problem):
 
-    def __init__(self, J, p, task_attributes, P, R, robot_types, T, robot_abilities, workspace, workspace_distance, robot_initial_positions, C, RUB):
-        #print(f"Debug: Inside class, J={J}, P={P}, R={R}, T={T}, p={p}, C={C}, RUB={RUB}")
-        # Rがリストで、Tが整数であることを確認
-        #print(f"Type of R: {type(R)}, Value of R: {R}")
-        #print(f"Type of T: {type(T)}, Value of T: {T}")
-        #print(f"Type of P: {type(P)}, Value of R: {P}")
+    def __init__(self, J, p, task_attributes, P, R, robot_types, T, robot_abilities, workspace, workspace_distance, moving_cost, robot_initial_positions, C, RUB, seed = None):
+        if seed is not None:
+            random.seed(seed)
+            np.random.seed(seed)
         self.J = J
         self.p = p
         self.task_attributes = task_attributes
@@ -27,6 +25,7 @@ class ResourceConstrainedSchedulingProblem(Problem):
         self.robot_abilities = robot_abilities
         self.workspace = workspace
         self.workspace_distance = workspace_distance
+        self.moving_cost = moving_cost
         self.robot_initial_positions = robot_initial_positions
         self.C = C  # Cを故障確率として使用
         self.RUB = RUB
@@ -39,7 +38,7 @@ class ResourceConstrainedSchedulingProblem(Problem):
                          type_var=int)
 
     def _evaluate(self, x, out, *args, **kwargs):
-        J, p, task_attributes, P, R, robot_types, T, robot_abilities, workspace, workspace_distance, robot_initial_positions, C, RUB = self.J, self.p, self.task_attributes, self.P, self.R, self.robot_types, self.T, self.robot_abilities, self.workspace, self.workspace_distance, self.robot_initial_positions, self.C, self.RUB
+        J, p, task_attributes, P, R, robot_types, T, robot_abilities, workspace, workspace_distance, moving_cost, robot_initial_positions, C, RUB = self.J, self.p, self.task_attributes, self.P, self.R, self.robot_types, self.T, self.robot_abilities, self.workspace, self.workspace_distance, self.moving_cost, self.robot_initial_positions, self.C, self.RUB
 
         x = x.reshape((x.shape[0], len(R), T))
 
@@ -47,6 +46,7 @@ class ResourceConstrainedSchedulingProblem(Problem):
         failed_tasks = np.zeros_like(x)
         moving_tasks = np.zeros_like(x)  # 移動を記録するための配列
         half_task_flag = np.zeros_like(x)  # 新しいフラグを追加
+        
 
         for i in range(x.shape[0]):
             workload = np.zeros(len(J))  # 各タスクの合計仕事量
@@ -65,69 +65,59 @@ class ResourceConstrainedSchedulingProblem(Problem):
 
             for t in range(T):
                 for r in range(len(R)):
-                    # 移動中であるかを確認し、移動が完了していない場合はタスク実行をスキップ
-                    #if remaining_distance[r] > 0:
-                        #move_ability = robot_abilities[robot_types[r + 1]]['move']
-                        #if remaining_distance[r] > move_ability:
-                            #remaining_distance[r] -= move_ability
-                            #moving_tasks[i, r, t] = 1  # 移動中フラグを設定
-                            #print(f"[Time {t+1}] Robot {r+1} is moving, remaining distance: {remaining_distance[r]}.")
-                            #continue  # 移動中はタスクを実行しない
-                        #else:
-                            # 移動が完了した場合
-                            #"remaining_distance[r] -= move_ability
-                            #current_workspace[r] = workspace[int(x[i, r, t])]  # 移動先のワークスペースに更新
-                            #remaining_distance[r] = 0
-                            #moving_tasks[i, r, t] = 1  # 移動完了フラグ
-                            #print(f"[Time {t+1}] Robot {r+1} completed move to workspace {current_workspace[r]}.")
-                            #continue  # 移動が完了した時点でタスクを実行せず、次のステップへ
-        
-        
-                    #else:
-                        # 通常のタスク割り当てを取得
                     task = int(x[i, r, t])
 
                     if task > 0:
                         task_attr = task_attributes[task]  # タスクの属性を取得
                         robot_type = robot_types[r + 1]    # ロボットの種類を取得
                         work = robot_abilities[robot_type][task_attr]  # 仕事量を取得
-                        task_workspace = workspace[task]  # タスクのworkspaceを取得z
+                        task_workspace = workspace[task]  # タスクのworkspaceを取得
+                        
+                        # 現在の作業場所とタスクの作業場所が異なる場合、移動を考慮
+                        if current_workspace[r] != task_workspace:
+                            cost = moving_cost[current_workspace[r]][task_workspace]
+                            work = work * (1 - cost / robot_abilities[robot_type]['move'])
+            
+                            # 作業量が減少したタスクを記録
+                            half_task_flag[i, r, t] = 1
+                            current_workspace[r] = task_workspace
+
 
                         # タスクIDが前回と同じ場合、移動なしで作業を続行
-                        if current_workspace[r] == task_workspace:
-                            remaining_distance[r] = 0
-                        else:
+                        #if current_workspace[r] == task_workspace:
+                            #remaining_distance[r] = 0
+                        #else:
                             # 異なるタスクの場合、移動距離を計算
-                            if remaining_distance[r] == 0:
-                                remaining_distance[r] = workspace_distance[current_workspace[r]][task_workspace]
+                            #if remaining_distance[r] == 0:
+                                #remaining_distance[r] = workspace_distance[current_workspace[r]][task_workspace]
 
                             # 移動可能距離を取得
-                            move_ability = robot_abilities[robot_type]['move']
-                            remaining_distance[r] -= move_ability
+                            #move_ability = robot_abilities[robot_type]['move']
+                            #remaining_distance[r] -= move_ability
 
                             # 移動中の場合の条件分岐
-                            if remaining_distance[r] > 0:
+                            #if remaining_distance[r] > 0:
                                 # 移動中（remaining_distanceが0を超えている場合）、次の時間も移動を続行
-                                moving_tasks[i, r, t] = 1  # 移動中のフラグを設定
-                                print(f"[Time {t+1}] Robot {r+1} is moving, remaining distance: {remaining_distance[r]}.")
-                                continue  # 移動中はタスクを実行しない
+                                #moving_tasks[i, r, t] = 1  # 移動中のフラグを設定
+                                #print(f"[Time {t+1}] Robot {r+1} is moving, remaining distance: {remaining_distance[r]}.")
+                                #continue  # 移動中はタスクを実行しない
                             
-                            elif remaining_distance[r] == 0:
+                            #elif remaining_distance[r] == 0:
                                 # 移動完了（remaining_distanceが0の場合）
-                                current_workspace[r] = task_workspace
-                                remaining_distance[r] = 0  # 念のためremaining_distanceを0に設定
-                                moving_tasks[i, r, t] = 1  # 移動完了フラグを設定
-                                print(f"[Time {t+1}] Robot {r+1} completed move to workspace {current_workspace[r]}.")
-                                continue  # 移動が完了した時間ではタスクを実行しない
+                                #current_workspace[r] = task_workspace
+                                #remaining_distance[r] = 0  # 念のためremaining_distanceを0に設定
+                                #moving_tasks[i, r, t] = 1  # 移動完了フラグを設定
+                                #print(f"[Time {t+1}] Robot {r+1} completed move to workspace {current_workspace[r]}.")
+                                #continue  # 移動が完了した時間ではタスクを実行しない
                             
-                            elif remaining_distance[r] < 0:
+                            #elif remaining_distance[r] < 0:
                                 # 移動完了（remaining_distanceが0以下の場合）、タスクを実行可能
-                                current_workspace[r] = task_workspace
-                                half_task_flag[i, r, t] = 1  # half_task_flag を設定
-                                print(f"[Time {t+1}] Robot {r+1} completed move to workspace {current_workspace[r]}, task execution with reduced workload.")
+                                #current_workspace[r] = task_workspace
+                                #half_task_flag[i, r, t] = 1  # half_task_flag を設定
+                                #print(f"[Time {t+1}] Robot {r+1} completed move to workspace {current_workspace[r]}, task execution with reduced workload.")
                             
                                 # ここで仕事量を半分にする
-                                work = work / 2
+                                #work = work / 2
 
                         # 順序制約を確認
                         for (pred_task, succ_task) in P:
@@ -143,6 +133,9 @@ class ResourceConstrainedSchedulingProblem(Problem):
                             work = 0  # 故障時に仕事量を0に設定
                             failed_tasks[i, r, t] = 1
                             print(f"Robot {r+1} failed at time {t+1} for task {task}")
+                            
+                        else:
+                            failed_tasks[i, r, t] = 0
 
 
                         # タスクが順序制約を満たし、故障していない場合、仕事量をworkloadに反映
@@ -158,8 +151,6 @@ class ResourceConstrainedSchedulingProblem(Problem):
                             if task_completion_time[task - 1] == -1:
                                 task_completion_time[task - 1] = t + 1
                                 print(f"Task {task} completed at time {task_completion_time[task - 1]}")
-
-            
 
             # 全タスクの最大完了時間を評価値とする
             evaluation_value = 0
@@ -180,7 +171,6 @@ class ResourceConstrainedSchedulingProblem(Problem):
 
             total_time.append(evaluation_value)
 
-            
         out["F"] = total_time
         out["failed_tasks"] = failed_tasks  # 故障したタスクを結果に含める
         out["moving_tasks"] = moving_tasks  # 移動中の情報を追加
