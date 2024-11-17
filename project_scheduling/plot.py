@@ -60,9 +60,9 @@ def plot_schedule(result, J, R, T, robot_types):
         #ax.vlines(t, ymin=0, ymax=len(R), colors='gray', linestyles='dotted', linewidth=0.5)
 
     # 凡例を追加
-    legend_labels = [f"T{int(j)}" for j in range(1, len(J) + 1)]
-    legend_patches = [plt.Line2D([0], [0], color=colors(j-1), lw=4) for j in range(1, len(J) + 1)]
-    ax.legend(legend_patches, legend_labels, title="Tasks", bbox_to_anchor=(1.05, 1), loc='upper left')
+    #legend_labels = [f"T{int(j)}" for j in range(1, len(J) + 1)]
+    #legend_patches = [plt.Line2D([0], [0], color=colors(j-1), lw=4) for j in range(1, len(J) + 1)]
+    #ax.legend(legend_patches, legend_labels, title="Tasks", bbox_to_anchor=(1.05, 1), loc='upper left')
 
     # x軸とy軸のラベル設定
     ax.set_xlabel('Time')
@@ -76,12 +76,26 @@ def plot_schedule(result, J, R, T, robot_types):
     plt.show()
     
     
-def plot_value_over_generations(min_value_over_gens):
+def plot_value_over_generations(min_value_over_gens, seed):
     plt.figure(figsize=(10, 6))
-    plt.plot(min_value_over_gens, color='b', label='Minimum Value')
+    plt.plot(min_value_over_gens, color='b', label=f'Seed {seed}')
     plt.xlabel('Generation')
     plt.ylabel('Minimum Evaluation Value')
-    plt.title('Value Over Generations')
+    plt.title(f'Value Over Generations (Seed {seed})')
+    plt.legend()
+    plt.grid(True)
+    plt.show()
+
+def plot_average_value_over_generations(all_min_values):
+    # 各世代ごとの平均を計算
+    all_min_values = np.array(all_min_values)
+    average_values = np.mean(all_min_values, axis=0)
+    
+    plt.figure(figsize=(10, 6))
+    plt.plot(average_values, color='r', label='Average Value')
+    plt.xlabel('Generation')
+    plt.ylabel('Average Minimum Evaluation Value')
+    plt.title('Average Value Over Generations')
     plt.legend()
     plt.grid(True)
     plt.show()

@@ -46,7 +46,7 @@ class ResourceConstrainedSchedulingProblem(Problem):
         failed_tasks = np.zeros_like(x)
         moving_tasks = np.zeros_like(x)  # 移動を記録するための配列
         half_task_flag = np.zeros_like(x)  # 新しいフラグを追加
-        
+        robot_failed = np.zeros((x.shape[0], len(R)), dtype=bool)  # ロボットごとの故障状態を追跡 (0: 正常, 1: 故障)
 
         for i in range(x.shape[0]):
             workload = np.zeros(len(J))  # 各タスクの合計仕事量
@@ -65,6 +65,9 @@ class ResourceConstrainedSchedulingProblem(Problem):
 
             for t in range(T):
                 for r in range(len(R)):
+                    if robot_failed[i, r] == 1:  # 故障中のロボットは処理をスキップ
+                        continue
+                    
                     task = int(x[i, r, t])
 
                     if task > 0:
@@ -128,11 +131,13 @@ class ResourceConstrainedSchedulingProblem(Problem):
                                         #print(f"Order constraint prevents task {task} from progressing at time {t+1} by Robot {r+1}")
 
                         # 故障確率の判定
-                        success_prob = (1 - C) ** t
+                        success_prob = 1 - C
                         if np.random.random() > success_prob:
                             work = 0  # 故障時に仕事量を0に設定
-                            failed_tasks[i, r, t] = 1
+                            failed_tasks[i, r, t:] = 1
+                            robot_failed[i, r] = 1  # ロボットを故障状態に設定
                             print(f"Robot {r+1} failed at time {t+1} for task {task}")
+                            continue  # 故障したため次の処理へ
                             
                         else:
                             failed_tasks[i, r, t] = 0
