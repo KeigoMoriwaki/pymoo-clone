@@ -84,6 +84,7 @@ def plot_value_over_generations(min_value_over_gens, seed):
     plt.title(f'Value Over Generations (Seed {seed})')
     plt.legend()
     plt.grid(True)
+    plt.savefig(f'value_over_generations_seed_{seed}.png')  # シードごとに保存
     plt.show()
 
 def plot_average_value_over_generations(all_min_values):
@@ -98,4 +99,5 @@ def plot_average_value_over_generations(all_min_values):
     plt.title('Average Value Over Generations')
     plt.legend()
     plt.grid(True)
+    plt.savefig('average_value_over_generations.png')  # 平均推移を保存
     plt.show()
