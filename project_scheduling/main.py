@@ -28,7 +28,7 @@ def main():
         
         # 問題のデータを取得
         problem_data = make_1r()
-        J, p, task_attributes, P, R, robot_types, T, robot_abilities, workspace, workspace_distance, moving_cost, robot_initial_positions, C, RUB = problem_data
+        robot_types, robot_initial_positions, J, p, task_attributes, P, R, T, robot_abilities, workspace, workspace_distance, moving_cost, C, RUB = problem_data
         
         # 最適化を実行し、結果と評価値推移を取得
         result, min_value_over_gens = solve_problem(problem_data, seed)

@@ -11,22 +11,22 @@ import random  # シード管理用に追加
 
 class ResourceConstrainedSchedulingProblem(Problem):
 
-    def __init__(self, J, p, task_attributes, P, R, robot_types, T, robot_abilities, workspace, workspace_distance, moving_cost, robot_initial_positions, C, RUB, seed = None):
+    def __init__(self,robot_types, robot_initial_positions, J, p, task_attributes, P, R, T, robot_abilities, workspace, workspace_distance, moving_cost, C, RUB, seed = None):
         if seed is not None:
             random.seed(seed)
             np.random.seed(seed)
+        self.robot_types = robot_types
+        self.robot_initial_positions = robot_initial_positions
         self.J = J
         self.p = p
         self.task_attributes = task_attributes
         self.P = P
         self.R = R
-        self.robot_types = robot_types
         self.T = T
         self.robot_abilities = robot_abilities
         self.workspace = workspace
         self.workspace_distance = workspace_distance
         self.moving_cost = moving_cost
-        self.robot_initial_positions = robot_initial_positions
         self.C = C  # Cを故障確率として使用
         self.RUB = RUB
         n_var = len(R) * T
@@ -38,7 +38,7 @@ class ResourceConstrainedSchedulingProblem(Problem):
                          type_var=int)
 
     def _evaluate(self, x, out, *args, **kwargs):
-        J, p, task_attributes, P, R, robot_types, T, robot_abilities, workspace, workspace_distance, moving_cost, robot_initial_positions, C, RUB = self.J, self.p, self.task_attributes, self.P, self.R, self.robot_types, self.T, self.robot_abilities, self.workspace, self.workspace_distance, self.moving_cost, self.robot_initial_positions, self.C, self.RUB
+        robot_types, robot_initial_positions, J, p, task_attributes, P, R, T, robot_abilities, workspace, workspace_distance, moving_cost, C, RUB = self.robot_types, self.robot_initial_positions, self.J, self.p, self.task_attributes, self.P, self.R, self.T, self.robot_abilities, self.workspace, self.workspace_distance, self.moving_cost, self.C, self.RUB
 
         x = x.reshape((x.shape[0], len(R), T))
 

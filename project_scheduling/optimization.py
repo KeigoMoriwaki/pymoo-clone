@@ -20,10 +20,10 @@ def solve_problem(problem_data, seed = None):
         random.seed(seed)
         np.random.seed(seed)
     
-    J, p, task_attributes, P, R, robot_types, T, robot_abilities, workspace, workspace_distance, moving_cost, robot_initial_positions, C, RUB = problem_data
+    robot_types, robot_initial_positions, J, p, task_attributes, P, R, T, robot_abilities, workspace, workspace_distance, moving_cost, C, RUB = problem_data
 
     # 問題をインスタンス化
-    problem = ResourceConstrainedSchedulingProblem(J, p, task_attributes, P, R, robot_types, T, robot_abilities, workspace, workspace_distance, moving_cost, robot_initial_positions, C, RUB)
+    problem = ResourceConstrainedSchedulingProblem(robot_types, robot_initial_positions, J, p, task_attributes, P, R, T, robot_abilities, workspace, workspace_distance, moving_cost, C, RUB)
     
     # 遺伝的アルゴリズムの設定
     algorithm = GA(

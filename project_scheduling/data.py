@@ -5,13 +5,44 @@ Created on Sat May 25 10:32:52 2024
 @author: k5kei
 """
 
+import yaml  # 外部ファイルを読み込むためのモジュール
+
+def load_robot_data(yaml_file):
+    """
+    YAMLファイルを読み込み、ロボットのタイプ、初期位置、workspaceの対応を生成する。
+    """
+    with open(yaml_file, 'r') as file:
+        robot_data = yaml.safe_load(file)
+
+    # ロボットIDのリストを生成
+    robot_types = {}
+    robot_initial_positions = {}
+    workspace_mapping = {
+        '[0.0, 0.0]': '1',
+        '[5.0, 5.0]': '2',
+        '[0.0, 5.0]': '3',
+        '[-5.0, -5.0]': '4'
+    }
+
+    id_counter = 1
+
+    for robot_name, details in robot_data.items():
+        robot_types[id_counter] = details['robot_type']
+        robot_initial_positions[id_counter] = workspace_mapping[str(details['coordinate'])]
+        id_counter += 1
+
+    return robot_types, robot_initial_positions
+
 def make_1r():
+    # YAMLからロボット情報を読み込む
+    yaml_file = "Robots.yaml"  # YAMLファイルのパス
+    robot_types, robot_initial_positions = load_robot_data(yaml_file)
+
     J = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]  # タスクID
     p = {1: 12, 2: 6, 3: 10, 4: 3, 5: 3, 6: 3, 
          7: 3, 8: 3, 9: 3, 10: 3, 11: 3, 12: 5, 
          13: 5, 14: 4, 15: 4, 16: 5, 17: 8}  # 各タスクの仕事量
-    
-    # 各タスクの属性 ('運搬' または '建設')
+
     task_attributes = {
         1: 'carry',
         2: 'build',
@@ -31,31 +62,12 @@ def make_1r():
         16: 'build',
         17: 'build'
     }
-    
-    #P = [[], [1, 2], [1, 3], [2, 4]]  # 各タスクの順序制約
+
     P = [(1, 2), (2, 3), (4, 8), (5, 9), (6, 10), (7, 11), (14, 16), (15, 17)]
-    
-    R = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]  # 各ロボット種類のID
-    robot_types = {
-        1: 'TWSH',
-        2: 'TWDH',
-        3: 'TWDH',
-        4: 'QWSH',
-        5: 'QWSH',
-        6: 'QWDH',
-        7: 'Dragon',
-        8: 'Minimal',
-        9: 'Minimal',
-        10: 'Minimal',
-        11: 'Minimal',
-        12: 'Minimal',
-        13: 'Minimal',
-        14: 'Minimal'
-    }
-    
-    T = 6  # 総期間長data.py
-    
-    # 各ロボットの種類ごとに、運搬と建設の仕事量
+
+    R = list(robot_types.keys())  # ロボットIDのリスト
+    T = 6  # 総期間長
+
     robot_abilities = {
         'TWSH': {'carry': 3, 'build': 3, 'move': 3},
         'TWDH': {'carry': 3, 'build': 5, 'move': 3},
@@ -68,23 +80,21 @@ def make_1r():
     workspace = {1: '1', 2: '2', 3: '2', 4: '1', 5: '1', 6: '1', 
                  7: '1', 8: '3', 9: '3', 10: '3', 11: '3', 12: '3', 
                  13: '3', 14: '1', 15: '1', 16: '4', 17: '4'}
+
     workspace_distance = {
         '1': {'1': 0, '2': 7, '3': 5, '4': 7},
         '2': {'1': 7, '2': 0, '3': 5, '4': 14},
         '3': {'1': 5, '2': 5, '3': 0, '4': 11},
         '4': {'1': 7, '2': 14, '3': 11, '4': 0}
     }
+
     moving_cost = {
         '1': {'1': 0, '2': 0.35, '3': 0.25, '4': 0.35},
         '2': {'1': 0.35, '2': 0, '3': 0.25, '4': 0.7},
         '3': {'1': 0.25, '2': 0.25, '3': 0, '4': 0.55},
         '4': {'1': 0.35, '2': 0.7, '3': 0.55, '4': 0}
     }
-    
-    # 各ロボットの初期位置を設定する辞書
-    robot_initial_positions = {1: '1', 2: '1', 3: '1', 4: '1', 5: '1', 6: '1', 7: '1',
-                               8: '1', 9: '1', 10: '1', 11: '1', 12: '1', 13: '1', 14: '1'}
-    
+
     C = 0.1  # 故障確率の係数
     
     # 各期間ごとに仕事をスタートさせる費用，今回の問題では必要ない
@@ -125,4 +135,4 @@ def make_1r():
         (3, 7): 1,
     }
 
-    return J, p, task_attributes, P, R, robot_types, T, robot_abilities, workspace, workspace_distance, moving_cost, robot_initial_positions, C, RUB
+    return robot_types, robot_initial_positions, J, p, task_attributes, P, R, T, robot_abilities, workspace, workspace_distance, moving_cost, C, RUB
