@@ -8,9 +8,8 @@ Created on Sat May 25 10:32:52 2024
 import yaml  # 外部ファイルを読み込むためのモジュール
 
 def load_robot_data(yaml_file):
-    """
-    YAMLファイルを読み込み、ロボットのタイプ、初期位置、workspaceの対応を生成する。
-    """
+    
+    #YAMLファイルを読み込み、ロボットのタイプ、初期位置、workspaceの対応を生成する
     with open(yaml_file, 'r') as file:
         robot_data = yaml.safe_load(file)
 

@@ -40,11 +40,10 @@ class ResourceConstrainedSchedulingProblem(Problem):
     def _evaluate(self, x, out, *args, **kwargs):
         robot_types, robot_initial_positions, J, p, task_attributes, P, R, T, robot_abilities, workspace, workspace_distance, moving_cost, C, RUB = self.robot_types, self.robot_initial_positions, self.J, self.p, self.task_attributes, self.P, self.R, self.T, self.robot_abilities, self.workspace, self.workspace_distance, self.moving_cost, self.C, self.RUB
 
-        # シード値の範囲を定義
+        # シード値を定義
         seed = 42
-        evaluations = []  # 各シードの評価値を格納するリスト
-
-        rng = np.random.default_rng(seed)  # シード値に基づいた乱数生成器を作成
+        # シード値に基づいた乱数生成器を作成
+        rng = np.random.default_rng(seed)
 
         x = x.reshape((x.shape[0], len(R), T))
     
@@ -136,7 +135,7 @@ class ResourceConstrainedSchedulingProblem(Problem):
                                         work = 0  # 順序制約に違反した場合、仕事量を0に設定
                                             #print(f"Order constraint prevents task {task} from progressing at time {t+1} by Robot {r+1}")
     
-                            # 故障確率の判定
+                        # 故障確率の判定
                         success_prob = 1 - C
                         if rng.random() > success_prob:
                             work = 0  # 故障時に仕事量を0に設定
