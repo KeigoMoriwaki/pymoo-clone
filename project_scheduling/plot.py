@@ -38,6 +38,12 @@ def plot_schedule(result, J, R, T, robot_types):
                 ax.broken_barh([(t, 1)], (r, 1), facecolors=(face_color))
                 #ax.text(t + 0.5, r + 0.5, "move", ha='center', va='center', color=text_color)  # 移動中には「move」を表示
 
+            elif half_task_flag[r, t] == 1 and task_id > 0 and failed_tasks[r, t] == 1:  # half_task_flagが設定されている場合
+                task_color = colors(int(task_id - 1))  # タスクIDに対応する色
+                ax.broken_barh([(t, 0.5)], (r, 1), facecolors='white')  # 左半分を白
+                ax.broken_barh([(t + 0.5, 0.5)], (r, 1), facecolors=(task_color))  # 右半分をタスクの色
+                ax.text(t + 0.5, r + 0.5, f"T{int(task_id)}", ha='center', va='center', color='white')
+
             elif half_task_flag[r, t] == 1 and task_id > 0:  # half_task_flagが設定されている場合
                 task_color = colors(int(task_id - 1))  # タスクIDに対応する色
                 ax.broken_barh([(t, 0.5)], (r, 1), facecolors='white')  # 左半分を白

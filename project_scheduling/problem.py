@@ -40,10 +40,7 @@ class ResourceConstrainedSchedulingProblem(Problem):
     def _evaluate(self, x, out, *args, **kwargs):
         robot_types, robot_initial_positions, J, p, task_attributes, P, R, T, robot_abilities, workspace, workspace_distance, moving_cost, C, RUB = self.robot_types, self.robot_initial_positions, self.J, self.p, self.task_attributes, self.P, self.R, self.T, self.robot_abilities, self.workspace, self.workspace_distance, self.moving_cost, self.C, self.RUB
 
-        # シード値を定義
-        seed = 42
-        # シード値に基づいた乱数生成器を作成
-        rng = np.random.default_rng(seed)
+
 
         x = x.reshape((x.shape[0], len(R), T))
     
@@ -54,6 +51,12 @@ class ResourceConstrainedSchedulingProblem(Problem):
         robot_failed = np.zeros((x.shape[0], len(R)), dtype=bool)  # ロボットごとの故障状態を追跡 (0: 正常, 1: 故障)
     
         for i in range(x.shape[0]):
+            
+            # シード値を定義
+            seed = 45
+            # シード値に基づいた乱数生成器を作成
+            rng = np.random.default_rng(seed)
+            
             workload = np.zeros(len(J))  # 各タスクの合計仕事量
             task_completed = np.zeros(len(J))
             task_completion_time = np.full(len(J), -1)  # タスクの完了時間を初期化
