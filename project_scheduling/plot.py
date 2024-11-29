@@ -109,11 +109,11 @@ def plot_average_value_over_generations(all_min_values):
     plt.show()
     
     
-def plot_schedule2(result2, J, R, T, robot_types):
-    schedule2 = result2.X.reshape((len(R), T))  # ロボットごとのスケジュールを保持
-    failed_tasks2 = result2.algorithm.pop.get("failed_tasks2")[0]
-    moving_tasks2 = result2.algorithm.pop.get("moving_tasks2")[0]  # 移動中の情報を取得
-    half_task_flag2 = result2.algorithm.pop.get("half_task_flag2")[0]  # 新しいフラグを取得
+def plot_schedule2(result, J, R, T, robot_types):
+    schedule = result.X.reshape((len(R), T))  # ロボットごとのスケジュールを保持
+    failed_tasks = result.algorithm.pop.get("failed_tasks")[0]
+    moving_tasks = result.algorithm.pop.get("moving_tasks")[0]  # 移動中の情報を取得
+    half_task_flag = result.algorithm.pop.get("half_task_flag")[0]  # 新しいフラグを取得
 
     fig, ax = plt.subplots(figsize=(12, 6))
     colors = plt.cm.get_cmap('tab10', len(J))  # タスク数に基づいたカラーマップを設定
@@ -124,7 +124,7 @@ def plot_schedule2(result2, J, R, T, robot_types):
     # スケジュールデータに基づき、ロボットが担当するタスクを確認
     for r in range(len(R)):  # 各ロボットについて
         for t in range(T):  # 各時間について
-            task_id = schedule2[r, t]  # 各ロボットのスケジュールからタスクIDを確認
+            task_id = schedule[r, t]  # 各ロボットのスケジュールからタスクIDを確認
             if task_id > 0 and task_id <= len(J):  # タスクが割り当てられている場合
                 task_allocation[r, t] = task_id
 
@@ -133,19 +133,19 @@ def plot_schedule2(result2, J, R, T, robot_types):
         for t in range(T):
             task_id = task_allocation[r, t]
             
-            if moving_tasks2[r, t] == 1:  # 移動中の場合
+            if moving_tasks[r, t] == 1:  # 移動中の場合
                 face_color = 'white'  # 移動中は背景を白にする
                 text_color = 'black'  # 文字色は黒に設定
                 ax.broken_barh([(t, 1)], (r, 1), facecolors=(face_color))
                 #ax.text(t + 0.5, r + 0.5, "move", ha='center', va='center', color=text_color)  # 移動中には「move」を表示
 
-            elif half_task_flag2[r, t] == 1 and task_id > 0 and failed_tasks2[r, t] == 1:  # half_task_flagが設定されている場合
+            elif half_task_flag[r, t] == 1 and task_id > 0 and failed_tasks[r, t] == 1:  # half_task_flagが設定されている場合
                 task_color = colors(int(task_id - 1))  # タスクIDに対応する色
                 ax.broken_barh([(t, 0.5)], (r, 1), facecolors='white')  # 左半分を白
                 ax.broken_barh([(t + 0.5, 0.5)], (r, 1), facecolors=(task_color))  # 右半分をタスクの色
                 ax.text(t + 0.5, r + 0.5, f"T{int(task_id)}", ha='center', va='center', color='white')
 
-            elif half_task_flag2[r, t] == 1 and task_id > 0:  # half_task_flagが設定されている場合
+            elif half_task_flag[r, t] == 1 and task_id > 0:  # half_task_flagが設定されている場合
                 task_color = colors(int(task_id - 1))  # タスクIDに対応する色
                 ax.broken_barh([(t, 0.5)], (r, 1), facecolors='white')  # 左半分を白
                 ax.broken_barh([(t + 0.5, 0.5)], (r, 1), facecolors=(task_color))  # 右半分をタスクの色
@@ -153,9 +153,9 @@ def plot_schedule2(result2, J, R, T, robot_types):
             
             elif task_id > 0:  # タスクが割り当てられている場合
                 face_color = colors(int(task_id - 1))  # タスクに対応する色
-                text_color = 'white' if failed_tasks2[r, t] == 1 else 'black'  # 故障時は白色、それ以外は黒色
+                text_color = 'white' if failed_tasks[r, t] == 1 else 'black'  # 故障時は白色、それ以外は黒色
                 ax.broken_barh([(t, 1)], (r, 1), facecolors=(face_color))
-                if failed_tasks2[r, t] == 1:
+                if failed_tasks[r, t] == 1:
                     # 故障時に細い白線を重ねる
                     #ax.plot([t+0.005, t+0.975], [r+0.5, r+0.5], color='white', linewidth=1)
                     ax.text(t + 0.5, r + 0.5, f"T{int(task_id)}", ha='center', va='center', color=text_color)  # タスクIDを表示
@@ -183,9 +183,9 @@ def plot_schedule2(result2, J, R, T, robot_types):
     plt.show()
     
     
-def plot_value_over_generations2(min_value_over_gens2, seed):
+def plot_value_over_generations2(min_value_over_gens, seed):
     plt.figure(figsize=(10, 6))
-    plt.plot(min_value_over_gens2, color='b', label=f'Seed {seed}')
+    plt.plot(min_value_over_gens, color='b', label=f'Seed {seed}')
     plt.xlabel('Generation')
     plt.ylabel('Minimum Evaluation Value')
     plt.title(f'Value Over Generations (Seed {seed})')
@@ -194,10 +194,10 @@ def plot_value_over_generations2(min_value_over_gens2, seed):
     plt.savefig(f'value_over_generations2_seed_{seed}.png')  # シードごとに保存
     plt.show()
 
-def plot_average_value_over_generations2(all_min_values2):
+def plot_average_value_over_generations2(all_min_values):
     # 各世代ごとの平均を計算
-    all_min_values2 = np.array(all_min_values2)
-    average_values = np.mean(all_min_values2, axis=0)
+    all_min_values = np.array(all_min_values)
+    average_values = np.mean(all_min_values, axis=0)
     
     plt.figure(figsize=(10, 6))
     plt.plot(average_values, color='r', label='Average Value')

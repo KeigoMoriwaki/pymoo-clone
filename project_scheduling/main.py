@@ -52,7 +52,7 @@ if __name__ == "__main__":
     
 def main2():
     seeds = range(42, 52)  # シード値 42～51
-    all_min_values2 = []  # 各シードの評価値推移を保存するリスト
+    all_min_values = []  # 各シードの評価値推移を保存するリスト
     
     for seed in seeds:
         print(f"Running optimization for seed {seed}...")
@@ -66,20 +66,21 @@ def main2():
         robot_types, robot_initial_positions, J, p, task_attributes, P, R, T, robot_abilities, workspace, workspace_distance, moving_cost, C, RUB = problem_data
         
         # 最適化を実行し、結果と評価値推移を取得
-        result2, min_value_over_gens2 = solve_problem2(problem_data, seed)
-        all_min_values2.append(min_value_over_gens2)
+        result, min_value_over_gens = solve_problem2(problem_data, seed)
+        all_min_values.append(min_value_over_gens)
         
         # スケジュールをプロット
         print(f"Plotting schedule for seed {seed}...")
-        plot_schedule2(result2, J, R, T, robot_types)  # 必要なデータを渡す
+        plot_schedule2(result, J, R, T, robot_types)  # 必要なデータを渡す
         
         # 評価値推移をプロット
         print(f"Plotting value over generations for seed {seed}...")
-        plot_value_over_generations2(min_value_over_gens2, seed)
+        plot_value_over_generations2(min_value_over_gens, seed)
     
     # 平均評価値の推移をプロット
     print("Plotting average value over generations...")
-    plot_average_value_over_generations2(all_min_values2)
+    plot_average_value_over_generations2(all_min_values)
 
 if __name__ == "__main__":
     main2()
+    

@@ -40,13 +40,15 @@ class ResourceConstrainedSchedulingProblem2(Problem):
     def _evaluate(self, x, out, *args, **kwargs):
         robot_types, robot_initial_positions, J, p, task_attributes, P, R, T, robot_abilities, workspace, workspace_distance, moving_cost, C, RUB = self.robot_types, self.robot_initial_positions, self.J, self.p, self.task_attributes, self.P, self.R, self.T, self.robot_abilities, self.workspace, self.workspace_distance, self.moving_cost, self.C, self.RUB
 
+
+
         x = x.reshape((x.shape[0], len(R), T))
     
-        total_time2 = []
-        failed_tasks2 = np.zeros_like(x)
-        moving_tasks2 = np.zeros_like(x)  # 移動を記録するための配列
-        half_task_flag2 = np.zeros_like(x)  # 新しいフラグを追加
-        robot_failed2 = np.zeros((x.shape[0], len(R)), dtype=bool)  # ロボットごとの故障状態を追跡 (0: 正常, 1: 故障)
+        total_time = []
+        failed_tasks = np.zeros_like(x)
+        moving_tasks = np.zeros_like(x)  # 移動を記録するための配列
+        half_task_flag = np.zeros_like(x)  # 新しいフラグを追加
+        robot_failed = np.zeros((x.shape[0], len(R)), dtype=bool)  # ロボットごとの故障状態を追跡 (0: 正常, 1: 故障)
     
         for i in range(x.shape[0]):
             
@@ -55,9 +57,9 @@ class ResourceConstrainedSchedulingProblem2(Problem):
             # シード値に基づいた乱数生成器を作成
             rng = np.random.default_rng(seed)
             
-            workload2 = np.zeros(len(J))  # 各タスクの合計仕事量
-            task_completed2 = np.zeros(len(J))
-            task_completion_time2 = np.full(len(J), -1)  # タスクの完了時間を初期化
+            workload = np.zeros(len(J))  # 各タスクの合計仕事量
+            task_completed = np.zeros(len(J))
+            task_completion_time = np.full(len(J), -1)  # タスクの完了時間を初期化
                 
             print(f"--- Evaluation of Individual {i+1} ---")
                 
@@ -71,16 +73,16 @@ class ResourceConstrainedSchedulingProblem2(Problem):
     
             for t in range(T):
                 for r in range(len(R)):
-                    if robot_failed2[i, r] == 1:  # 故障中のロボットは処理をスキップ
+                    if robot_failed[i, r] == 1:  # 故障中のロボットは処理をスキップ
                         continue
                         
-                    task2 = int(x[i, r, t])
+                    task = int(x[i, r, t])
     
-                    if task2 > 0:
-                        task_attr = task_attributes[task2]  # タスクの属性を取得
+                    if task > 0:
+                        task_attr = task_attributes[task]  # タスクの属性を取得
                         robot_type = robot_types[r + 1]    # ロボットの種類を取得
                         work = robot_abilities[robot_type][task_attr]  # 仕事量を取得
-                        task_workspace = workspace[task2]  # タスクのworkspaceを取得
+                        task_workspace = workspace[task]  # タスクのworkspaceを取得
                             
                     # 現在の作業場所とタスクの作業場所が異なる場合、移動を考慮
                         if current_workspace[r] != task_workspace:
@@ -88,7 +90,7 @@ class ResourceConstrainedSchedulingProblem2(Problem):
                             work = work * (1 - cost / robot_abilities[robot_type]['move'])
                 
                                 # 作業量が減少したタスクを記録
-                            half_task_flag2[i, r, t] = 1
+                            half_task_flag[i, r, t] = 1
                             current_workspace[r] = task_workspace
     
     
@@ -130,9 +132,9 @@ class ResourceConstrainedSchedulingProblem2(Problem):
     
                             # 順序制約を確認
                         for (pred_task, succ_task) in P:
-                            if task2 > 0:  # タスクが割り当てられている場合
-                                if workload2[pred_task - 1] < p[pred_task]:  # 順序制約を確認
-                                    if task2 == succ_task:
+                            if task > 0:  # タスクが割り当てられている場合
+                                if workload[pred_task - 1] < p[pred_task]:  # 順序制約を確認
+                                    if task == succ_task:
                                         work = 0  # 順序制約に違反した場合、仕事量を0に設定
                                             #print(f"Order constraint prevents task {task} from progressing at time {t+1} by Robot {r+1}")
     
@@ -141,39 +143,39 @@ class ResourceConstrainedSchedulingProblem2(Problem):
     
                             # タスクが順序制約を満たし、故障していない場合、仕事量をworkloadに反映
                         for j in range(len(J)):
-                            if task2 == J[j]:
-                                workload2[j] += work
-                                print(f"Task {task2} (attribute: {task_attr}) executed by Robot {r+1} (type: {robot_type}) at time {t+1}: Workload = {workload2[j]}/{p[task2]}")
+                            if task == J[j]:
+                                workload[j] += work
+                                print(f"Task {task} (attribute: {task_attr}) executed by Robot {r+1} (type: {robot_type}) at time {t+1}: Workload = {workload[j]}/{p[task]}")
     
                                     
                             # タスクが完了しているかをチェック
-                        if workload2[task2 - 1] >= p[task2]:
-                            task_completed2[task2 - 1] = 1
-                            if task_completion_time2[task2 - 1] == -1:
-                                task_completion_time2[task2 - 1] = t + 1
-                                print(f"Task {task2} completed at time {task_completion_time2[task2 - 1]}")
+                        if workload[task - 1] >= p[task]:
+                            task_completed[task - 1] = 1
+                            if task_completion_time[task - 1] == -1:
+                                task_completion_time[task - 1] = t + 1
+                                print(f"Task {task} completed at time {task_completion_time[task - 1]}")
     
             # 全タスクの最大完了時間を評価値とする
-            evaluation_value2 = 0
-            if np.all(task_completed2):
-                evaluation_value2 = np.max(task_completion_time2)
-                print(f"All tasks completed by evaluation_value {evaluation_value2}")
+            evaluation_value = 0
+            if np.all(task_completed):
+                evaluation_value = np.max(task_completion_time)
+                print(f"All tasks completed by evaluation_value {evaluation_value}")
             else:
                 # 未完了タスクがある場合は、まずTを加算する
-                evaluation_value2 += T
-                print(f"Some tasks are incomplete. Base evaluation value: {evaluation_value2}")
+                evaluation_value += T
+                print(f"Some tasks are incomplete. Base evaluation value: {evaluation_value}")
         
                 # 残りの仕事量を合算する
                 for j in range(len(J)):
-                    if task_completed2[j] == 0:
-                        remaining_workload2 = p[J[j]] - workload2[j]
-                        evaluation_value2 += remaining_workload2   # 残り仕事量のみを追加
-                        print(f"Task {J[j]} is incomplete. Remaining workload: {remaining_workload2}. Total evaluation value now: {evaluation_value2}")
+                    if task_completed[j] == 0:
+                        remaining_workload = p[J[j]] - workload[j]
+                        evaluation_value += remaining_workload   # 残り仕事量のみを追加
+                        print(f"Task {J[j]} is incomplete. Remaining workload: {remaining_workload}. Total evaluation value now: {evaluation_value}")
     
-            total_time2.append(evaluation_value2)
+            total_time.append(evaluation_value)
 
-        out["F2"] = total_time2
-        out["failed_tasks2"] = failed_tasks2  # 故障したタスクを結果に含める
-        out["moving_tasks2"] = moving_tasks2  # 移動中の情報を追加
+        out["F"] = total_time
+        out["failed_tasks"] = failed_tasks  # 故障したタスクを結果に含める
+        out["moving_tasks"] = moving_tasks  # 移動中の情報を追加
         # 最後に out に half_task_flag を追加
-        out["half_task_flag2"] = half_task_flag2
+        out["half_task_flag"] = half_task_flag
