@@ -8,11 +8,11 @@ Created on Thu May 30 20:02:17 2024
 import matplotlib.pyplot as plt
 import numpy as np
 
-def plot_schedule(result, J, R, T, robot_types):
-    schedule = result.X.reshape((len(R), T))  # ロボットごとのスケジュールを保持
-    failed_tasks = result.algorithm.pop.get("failed_tasks")[0]
-    moving_tasks = result.algorithm.pop.get("moving_tasks")[0]  # 移動中の情報を取得
-    half_task_flag = result.algorithm.pop.get("half_task_flag")[0]  # 新しいフラグを取得
+def plot_schedule(result1, J, R, T, robot_types):
+    schedule = result1.X.reshape((len(R), T))  # ロボットごとのスケジュールを保持
+    failed_tasks = result1.algorithm.pop.get("failed_tasks")[0]
+    moving_tasks = result1.algorithm.pop.get("moving_tasks")[0]  # 移動中の情報を取得
+    half_task_flag = result1.algorithm.pop.get("half_task_flag")[0]  # 新しいフラグを取得
 
     fig, ax = plt.subplots(figsize=(12, 6))
     colors = plt.cm.get_cmap('tab10', len(J))  # タスク数に基づいたカラーマップを設定
@@ -49,7 +49,7 @@ def plot_schedule(result, J, R, T, robot_types):
                 ax.broken_barh([(t, 0.5)], (r, 1), facecolors='white')  # 左半分を白
                 ax.broken_barh([(t + 0.5, 0.5)], (r, 1), facecolors=(task_color))  # 右半分をタスクの色
                 ax.text(t + 0.5, r + 0.5, f"T{int(task_id)}", ha='center', va='center', color='black')
-            
+
             elif task_id > 0:  # タスクが割り当てられている場合
                 face_color = colors(int(task_id - 1))  # タスクに対応する色
                 text_color = 'white' if failed_tasks[r, t] == 1 else 'black'  # 故障時は白色、それ以外は黒色
@@ -80,8 +80,7 @@ def plot_schedule(result, J, R, T, robot_types):
     ax.set_xticks(np.arange(T + 1))
 
     plt.show()
-    
-    
+
 def plot_value_over_generations(min_value_over_gens, seed):
     plt.figure(figsize=(10, 6))
     plt.plot(min_value_over_gens, color='b', label=f'Seed {seed}')
@@ -97,7 +96,7 @@ def plot_average_value_over_generations(all_min_values):
     # 各世代ごとの平均を計算
     all_min_values = np.array(all_min_values)
     average_values = np.mean(all_min_values, axis=0)
-    
+
     plt.figure(figsize=(10, 6))
     plt.plot(average_values, color='r', label='Average Value')
     plt.xlabel('Generation')
@@ -107,13 +106,12 @@ def plot_average_value_over_generations(all_min_values):
     plt.grid(True)
     plt.savefig('average_value_over_generations.png')  # 平均推移を保存
     plt.show()
-    
-    
-def plot_schedule2(result, J, R, T, robot_types):
-    schedule = result.X.reshape((len(R), T))  # ロボットごとのスケジュールを保持
-    failed_tasks = result.algorithm.pop.get("failed_tasks")[0]
-    moving_tasks = result.algorithm.pop.get("moving_tasks")[0]  # 移動中の情報を取得
-    half_task_flag = result.algorithm.pop.get("half_task_flag")[0]  # 新しいフラグを取得
+
+def plot_schedule2(result2, J, R, T, robot_types):
+    schedule = result2.X.reshape((len(R), T))  # ロボットごとのスケジュールを保持
+    failed_tasks = result2.algorithm.pop.get("failed_tasks")[0]
+    moving_tasks = result2.algorithm.pop.get("moving_tasks")[0]  # 移動中の情報を取得
+    half_task_flag = result2.algorithm.pop.get("half_task_flag")[0]  # 新しいフラグを取得
 
     fig, ax = plt.subplots(figsize=(12, 6))
     colors = plt.cm.get_cmap('tab10', len(J))  # タスク数に基づいたカラーマップを設定
@@ -132,7 +130,7 @@ def plot_schedule2(result, J, R, T, robot_types):
     for r in range(len(R)):
         for t in range(T):
             task_id = task_allocation[r, t]
-            
+
             if moving_tasks[r, t] == 1:  # 移動中の場合
                 face_color = 'white'  # 移動中は背景を白にする
                 text_color = 'black'  # 文字色は黒に設定
@@ -150,7 +148,7 @@ def plot_schedule2(result, J, R, T, robot_types):
                 ax.broken_barh([(t, 0.5)], (r, 1), facecolors='white')  # 左半分を白
                 ax.broken_barh([(t + 0.5, 0.5)], (r, 1), facecolors=(task_color))  # 右半分をタスクの色
                 ax.text(t + 0.5, r + 0.5, f"T{int(task_id)}", ha='center', va='center', color='black')
-            
+
             elif task_id > 0:  # タスクが割り当てられている場合
                 face_color = colors(int(task_id - 1))  # タスクに対応する色
                 text_color = 'white' if failed_tasks[r, t] == 1 else 'black'  # 故障時は白色、それ以外は黒色
@@ -176,13 +174,12 @@ def plot_schedule2(result, J, R, T, robot_types):
     ax.set_ylabel('Robot')
     ax.set_yticks(np.arange(len(R)) + 0.5)
     ax.set_yticklabels([f'R{r} ({robot_types[r]})' for r in R])
-    
+
     # x軸の目盛りを10刻みで設定し、そのラベルを1/10にした表示に変更
     ax.set_xticks(np.arange(T + 1))
 
     plt.show()
-    
-    
+
 def plot_value_over_generations2(min_value_over_gens, seed):
     plt.figure(figsize=(10, 6))
     plt.plot(min_value_over_gens, color='b', label=f'Seed {seed}')
@@ -198,7 +195,7 @@ def plot_average_value_over_generations2(all_min_values):
     # 各世代ごとの平均を計算
     all_min_values = np.array(all_min_values)
     average_values = np.mean(all_min_values, axis=0)
-    
+
     plt.figure(figsize=(10, 6))
     plt.plot(average_values, color='r', label='Average Value')
     plt.xlabel('Generation')
