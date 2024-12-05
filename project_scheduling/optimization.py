@@ -36,17 +36,17 @@ def solve_problem(problem_data, seed = None):
     )
 
     # 各世代ごとの最小評価値を記録するためのリストを作成
-    min_value_over_gens = []
+    min_value_over_gens1 = []
 
     # 最適化のコールバック関数を定義して世代ごとに最小評価値を記録
     def record_min_value(algorithm):
         gen_min_value = algorithm.pop.get("F").min()  # 現在の世代の最小評価値を取得
-        min_value_over_gens.append(gen_min_value)    # リストに追加
+        min_value_over_gens1.append(gen_min_value)    # リストに追加
 
     # 最適化を実行し、コールバック関数を利用してデータ収集
     result1 = minimize(problem, algorithm, ('n_gen', 300), verbose=True, callback=record_min_value)
 
-    return result1, min_value_over_gens  # 最適化結果と最小評価値のリストを返す
+    return result1, min_value_over_gens1  # 最適化結果と最小評価値のリストを返す
 
 def solve_problem2(problem_data, seed = None):
     if seed is not None:
@@ -68,17 +68,17 @@ def solve_problem2(problem_data, seed = None):
     )
 
     # 各世代ごとの最小評価値を記録するためのリストを作成
-    min_value_over_gens = []
+    min_value_over_gens2 = []
 
     # 最適化のコールバック関数を定義して世代ごとに最小評価値を記録
     def record_min_value(algorithm):
         gen_min_value = algorithm.pop.get("F").min()  # 現在の世代の最小評価値を取得
-        min_value_over_gens.append(gen_min_value)    # リストに追加
+        min_value_over_gens2.append(gen_min_value)    # リストに追加
 
     # 最適化を実行し、コールバック関数を利用してデータ収集
     result2 = minimize(problem, algorithm, ('n_gen', 300), verbose=True, callback=record_min_value)
 
-    return result2, min_value_over_gens  # 最適化結果と最小評価値のリストを返す
+    return result2, min_value_over_gens2  # 最適化結果と最小評価値のリストを返す
 
 def simulate_schedule1(result, problem_data, consider_failures=True):
     robot_types, robot_initial_positions, J, p, task_attributes, P, R, T, robot_abilities, workspace, workspace_distance, moving_cost, C, RUB = problem_data

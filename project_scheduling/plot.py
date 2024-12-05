@@ -92,10 +92,10 @@ def plot_value_over_generations(min_value_over_gens, seed):
     plt.savefig(f'value_over_generations_seed_{seed}.png')  # シードごとに保存
     plt.show()
 
-def plot_average_value_over_generations(all_min_values):
+def plot_average_value_over_generations(all_min_values1):
     # 各世代ごとの平均を計算
-    all_min_values = np.array(all_min_values)
-    average_values = np.mean(all_min_values, axis=0)
+    all_min_values1 = np.array(all_min_values1)
+    average_values = np.mean(all_min_values1, axis=0)
 
     plt.figure(figsize=(10, 6))
     plt.plot(average_values, color='r', label='Average Value')
@@ -191,10 +191,10 @@ def plot_value_over_generations2(min_value_over_gens, seed):
     plt.savefig(f'value_over_generations2_seed_{seed}.png')  # シードごとに保存
     plt.show()
 
-def plot_average_value_over_generations2(all_min_values):
+def plot_average_value_over_generations2(all_min_values2):
     # 各世代ごとの平均を計算
-    all_min_values = np.array(all_min_values)
-    average_values = np.mean(all_min_values, axis=0)
+    all_min_values2 = np.array(all_min_values2)
+    average_values = np.mean(all_min_values2, axis=0)
 
     plt.figure(figsize=(10, 6))
     plt.plot(average_values, color='r', label='Average Value')
