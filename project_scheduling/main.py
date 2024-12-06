@@ -13,15 +13,15 @@ import numpy as np
 from data import make_1r
 from optimization import solve_problem
 from optimization import solve_problem2
-from optimization import simulate_schedule1
-from optimization import simulate_schedule2
+from simulate_failure import simulate_schedule1
+from simulate_no_failure import simulate_schedule2
 from plot import plot_schedule, plot_value_over_generations, plot_average_value_over_generations
 from plot import plot_schedule2, plot_value_over_generations2, plot_average_value_over_generations2
 
 def main():
     all_min_values1 = []  # 各シードの評価値推移を保存するリスト
     all_min_values2 = []  # 各シードの評価値推移を保存するリスト
-    seeds = range(42, 52)
+    seeds = range(60, 70)
     results_stage1 = {"with_failure": [], "without_failure": []}
     evaluation_values = {"with_failure": {"failure": [], "no_failure": []},
                          "without_failure": {"failure": [], "no_failure": []}}

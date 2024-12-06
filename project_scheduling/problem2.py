@@ -52,7 +52,7 @@ class ResourceConstrainedSchedulingProblem2(Problem):
             print(f"--- Evaluation of Individual {i+1} ---")
 
             # シード値を定義
-            seeds = range(1, 6)
+            seeds = range(1, 11)
             evaluation_values_per_seed = []  # 各シード値の評価値を格納するリスト
             
             for seed in seeds:

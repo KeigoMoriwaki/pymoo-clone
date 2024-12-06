@@ -81,9 +81,9 @@ def plot_schedule(result1, J, R, T, robot_types):
 
     plt.show()
 
-def plot_value_over_generations(min_value_over_gens, seed):
+def plot_value_over_generations(min_value_over_gens1, seed):
     plt.figure(figsize=(10, 6))
-    plt.plot(min_value_over_gens, color='b', label=f'Seed {seed}')
+    plt.plot(min_value_over_gens1, color='b', label=f'Seed {seed}')
     plt.xlabel('Generation')
     plt.ylabel('Minimum Evaluation Value')
     plt.title(f'Value Over Generations (Seed {seed})')
@@ -180,9 +180,9 @@ def plot_schedule2(result2, J, R, T, robot_types):
 
     plt.show()
 
-def plot_value_over_generations2(min_value_over_gens, seed):
+def plot_value_over_generations2(min_value_over_gens2, seed):
     plt.figure(figsize=(10, 6))
-    plt.plot(min_value_over_gens, color='b', label=f'Seed {seed}')
+    plt.plot(min_value_over_gens2, color='b', label=f'Seed {seed}')
     plt.xlabel('Generation')
     plt.ylabel('Minimum Evaluation Value')
     plt.title(f'Value Over Generations (Seed {seed})')
