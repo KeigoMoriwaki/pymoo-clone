@@ -1,0 +1,16 @@
+{
+    "averaged_results_stage1": {
+        "with_failure": 5.7475000000000005,
+        "without_failure": 3.5
+    },
+    "averaged_results_stage2": {
+        "failure": 4.85,
+        "no_failure": 3.5
+    },
+    "final_evaluation_values": {
+        "with_failure_vs_failure": 0.8975000000000009,
+        "with_failure_vs_no_failure": 2.2475000000000005,
+        "without_failure_vs_failure": -1.3499999999999996,
+        "without_failure_vs_no_failure": 0.0
+    }
+}

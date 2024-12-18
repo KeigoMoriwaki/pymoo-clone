@@ -81,31 +81,6 @@ def plot_schedule(result1, J, R, T, robot_types):
 
     plt.show()
 
-def plot_value_over_generations(min_value_over_gens1, seed):
-    plt.figure(figsize=(10, 6))
-    plt.plot(min_value_over_gens1, color='b', label=f'Seed {seed}')
-    plt.xlabel('Generation')
-    plt.ylabel('Minimum Evaluation Value')
-    plt.title(f'Value Over Generations (Seed {seed})')
-    plt.legend()
-    plt.grid(True)
-    plt.savefig(f'value_over_generations_seed_{seed}.png')  # シードごとに保存
-    plt.show()
-
-def plot_average_value_over_generations(all_min_values1):
-    # 各世代ごとの平均を計算
-    all_min_values1 = np.array(all_min_values1)
-    average_values = np.mean(all_min_values1, axis=0)
-
-    plt.figure(figsize=(10, 6))
-    plt.plot(average_values, color='r', label='Average Value')
-    plt.xlabel('Generation')
-    plt.ylabel('Average Minimum Evaluation Value')
-    plt.title('Average Value Over Generations')
-    plt.legend()
-    plt.grid(True)
-    plt.savefig('average_value_over_generations.png')  # 平均推移を保存
-    plt.show()
 
 def plot_schedule2(result2, J, R, T, robot_types):
     schedule = result2.X.reshape((len(R), T))  # ロボットごとのスケジュールを保持
@@ -180,28 +155,45 @@ def plot_schedule2(result2, J, R, T, robot_types):
 
     plt.show()
 
-def plot_value_over_generations2(min_value_over_gens2, seed):
+def plot_value_comparison(min_value_over_gens1, min_value_over_gens2, seed):
+    """
+    2つのシードに対応する最小評価値の推移を1つのグラフに描画。
+    """
     plt.figure(figsize=(10, 6))
-    plt.plot(min_value_over_gens2, color='b', label=f'Seed {seed}')
+    # 1つ目のデータ
+    plt.plot(min_value_over_gens1, color='b', label='with_failure')
+    # 2つ目のデータ
+    plt.plot(min_value_over_gens2, color='r', label='without_failure')
+    
+    # グラフの設定
     plt.xlabel('Generation')
     plt.ylabel('Minimum Evaluation Value')
-    plt.title(f'Value Over Generations (Seed {seed})')
+    plt.title(f'Comparison of Value Over Generations (Seed {seed})')
     plt.legend()
     plt.grid(True)
-    plt.savefig(f'value_over_generations2_seed_{seed}.png')  # シードごとに保存
+    plt.savefig(f'value_comparison_over_generations_seed_{seed}.png')  # 結合したグラフを保存
     plt.show()
 
-def plot_average_value_over_generations2(all_min_values2):
-    # 各世代ごとの平均を計算
-    all_min_values2 = np.array(all_min_values2)
-    average_values = np.mean(all_min_values2, axis=0)
+
+def plot_average_value_comparison(all_min_values1, all_min_values2):
+    """
+    2つのデータセットの平均値推移を1つのグラフに描画。
+    """
+    # 平均値を計算
+    average_values1 = np.mean(np.array(all_min_values1), axis=0)
+    average_values2 = np.mean(np.array(all_min_values2), axis=0)
 
     plt.figure(figsize=(10, 6))
-    plt.plot(average_values, color='r', label='Average Value')
+    # 1つ目のデータの平均値
+    plt.plot(average_values1, color='b', label='with_failure')
+    # 2つ目のデータの平均値
+    plt.plot(average_values2, color='r', label='without_failure')
+
+    # グラフの設定
     plt.xlabel('Generation')
     plt.ylabel('Average Minimum Evaluation Value')
-    plt.title('Average Value Over Generations')
+    plt.title('Comparison of Average Value Over Generations')
     plt.legend()
     plt.grid(True)
-    plt.savefig('average_value_over_generations2.png')  # 平均推移を保存
+    plt.savefig('average_value_comparison_over_generations.png')  # 結合した平均値グラフを保存
     plt.show()
