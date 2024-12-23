@@ -163,7 +163,7 @@ class ResourceConstrainedSchedulingProblem3(Problem):
                 # シード値ごとの評価値を保存
                 evaluation_value = 0
                 if np.all(task_completed):
-                    evaluation_value = np.max(task_completion_time)
+                    evaluation_value = np.mean(task_completion_time)
                 else:
                     evaluation_value += T
                     for j in range(len(J)):
@@ -175,7 +175,7 @@ class ResourceConstrainedSchedulingProblem3(Problem):
                 evaluation_values_per_seed.append(evaluation_value)
             
             # シード範囲の平均を計算
-            average_evaluation_value = np.mean(evaluation_values_per_seed)
+            average_evaluation_value = np.max(evaluation_values_per_seed)
             print(f"Individual {i+1}: Average Evaluation Value over Seeds {seeds} = {average_evaluation_value}")
             
             # 平均値を結果に追加

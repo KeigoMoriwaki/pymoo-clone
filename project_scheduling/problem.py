@@ -52,7 +52,7 @@ class ResourceConstrainedSchedulingProblem(Problem):
             print(f"--- Evaluation of Individual {i+1} ---")
 
             # シード値を定義
-            seeds = range(1, 11)
+            seeds = range(1, 2)
             
             evaluation_values_per_seed = []  # 各シード値の評価値を格納するリスト
             
@@ -75,7 +75,7 @@ class ResourceConstrainedSchedulingProblem(Problem):
                             continue
     
                         task = int(x[i, r, t])
-    
+
                         if task > 0:
                             task_attr = task_attributes[task]  # タスクの属性を取得
                             robot_type = robot_types[r + 1]    # ロボットの種類を取得
@@ -90,51 +90,14 @@ class ResourceConstrainedSchedulingProblem(Problem):
                                     # 作業量が減少したタスクを記録
                                 half_task_flag[i, r, t] = 1
                                 current_workspace[r] = task_workspace
-    
-                                # タスクIDが前回と同じ場合、移動なしで作業を続行
-                                #if current_workspace[r] == task_workspace:
-                                    #remaining_distance[r] = 0
-                                #else:
-                                    # 異なるタスクの場合、移動距離を計算
-                                    #if remaining_distance[r] == 0:
-                                        #remaining_distance[r] = workspace_distance[current_workspace[r]][task_workspace]
-    
-                                    # 移動可能距離を取得
-                                    #move_ability = robot_abilities[robot_type]['move']
-                                    #remaining_distance[r] -= move_ability
-    
-                                    # 移動中の場合の条件分岐
-                                    #if remaining_distance[r] > 0:
-                                        # 移動中（remaining_distanceが0を超えている場合）、次の時間も移動を続行
-                                        #moving_tasks[i, r, t] = 1  # 移動中のフラグを設定
-                                        #print(f"[Time {t+1}] Robot {r+1} is moving, remaining distance: {remaining_distance[r]}.")
-                                        #continue  # 移動中はタスクを実行しない
-    
-                                    #elif remaining_distance[r] == 0:
-                                        # 移動完了（remaining_distanceが0の場合）
-                                        #current_workspace[r] = task_workspace
-                                        #remaining_distance[r] = 0  # 念のためremaining_distanceを0に設定
-                                        #moving_tasks[i, r, t] = 1  # 移動完了フラグを設定
-                                        #print(f"[Time {t+1}] Robot {r+1} completed move to workspace {current_workspace[r]}.")
-                                        #continue  # 移動が完了した時間ではタスクを実行しない
-                                    
-                                    #elif remaining_distance[r] < 0:
-                                        # 移動完了（remaining_distanceが0以下の場合）、タスクを実行可能
-                                        #current_workspace[r] = task_workspace
-                                        #half_task_flag[i, r, t] = 1  # half_task_flag を設定
-                                        #print(f"[Time {t+1}] Robot {r+1} completed move to workspace {current_workspace[r]}, task execution with reduced workload.")
-                                    
-                                        # ここで仕事量を半分にする
-                                        #work = work / 2
-    
+
                                 # 順序制約を確認
                             for (pred_task, succ_task) in P:
                                 if task > 0:  # タスクが割り当てられている場合
                                     if workload[pred_task - 1] < p[pred_task]:  # 順序制約を確認
                                         if task == succ_task:
                                             work = 0  # 順序制約に違反した場合、仕事量を0に設定
-                                                #print(f"Order constraint prevents task {task} from progressing at time {t+1} by Robot {r+1}")
-    
+
                             # 故障確率の判定
                             success_prob = 1 - C
                             if rng.random() > success_prob:
@@ -143,16 +106,16 @@ class ResourceConstrainedSchedulingProblem(Problem):
                                 robot_failed[i, r] = 1  # ロボットを故障状態に設定
                                 print(f"Robot {r+1} failed at time {t+1} for task {task}")
                                 continue  # 故障したため次の処理へ
-    
+
                             else:
                                 failed_tasks[i, r, t] = 0
-    
+
                                 # タスクが順序制約を満たし、故障していない場合、仕事量をworkloadに反映
                             for j in range(len(J)):
                                 if task == J[j]:
                                     workload[j] += work
                                     print(f"Task {task} (attribute: {task_attr}) executed by Robot {r+1} (type: {robot_type}) at time {t+1}: Workload = {workload[j]}/{p[task]}")
-    
+
                                 # タスクが完了しているかをチェック
                             if workload[task - 1] >= p[task]:
                                 task_completed[task - 1] = 1

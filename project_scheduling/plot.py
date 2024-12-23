@@ -8,9 +8,10 @@ Created on Thu May 30 20:02:17 2024
 import matplotlib.pyplot as plt
 import numpy as np
 
-def plot_schedule(result1, J, R, T, robot_types):
+def plot_schedule(result1, J, R, T, robot_types, seed):
     schedule = result1.X.reshape((len(R), T))  # ロボットごとのスケジュールを保持
     failed_tasks = result1.algorithm.pop.get("failed_tasks")[0]
+
     moving_tasks = result1.algorithm.pop.get("moving_tasks")[0]  # 移動中の情報を取得
     half_task_flag = result1.algorithm.pop.get("half_task_flag")[0]  # 新しいフラグを取得
 
@@ -78,11 +79,12 @@ def plot_schedule(result1, J, R, T, robot_types):
     
     # x軸の目盛りを10刻みで設定し、そのラベルを1/10にした表示に変更
     ax.set_xticks(np.arange(T + 1))
-
+    
+    plt.savefig(f'schedule_with_failure_seed_{seed}.png')  # 結合したグラフを保存
     plt.show()
 
 
-def plot_schedule2(result2, J, R, T, robot_types):
+def plot_schedule2(result2, J, R, T, robot_types, seed):
     schedule = result2.X.reshape((len(R), T))  # ロボットごとのスケジュールを保持
     failed_tasks = result2.algorithm.pop.get("failed_tasks")[0]
     moving_tasks = result2.algorithm.pop.get("moving_tasks")[0]  # 移動中の情報を取得
@@ -153,12 +155,11 @@ def plot_schedule2(result2, J, R, T, robot_types):
     # x軸の目盛りを10刻みで設定し、そのラベルを1/10にした表示に変更
     ax.set_xticks(np.arange(T + 1))
 
+    plt.savefig(f'schedule_without_failure_seed_{seed}.png')  # 結合したグラフを保存
     plt.show()
 
 def plot_value_comparison(min_value_over_gens1, min_value_over_gens2, seed):
-    """
-    2つのシードに対応する最小評価値の推移を1つのグラフに描画。
-    """
+
     plt.figure(figsize=(10, 6))
     # 1つ目のデータ
     plt.plot(min_value_over_gens1, color='b', label='with_failure')
@@ -169,6 +170,7 @@ def plot_value_comparison(min_value_over_gens1, min_value_over_gens2, seed):
     plt.xlabel('Generation')
     plt.ylabel('Minimum Evaluation Value')
     plt.title(f'Comparison of Value Over Generations (Seed {seed})')
+    plt.ylim(0, 50)  # 縦軸の範囲を設定
     plt.legend()
     plt.grid(True)
     plt.savefig(f'value_comparison_over_generations_seed_{seed}.png')  # 結合したグラフを保存
@@ -176,9 +178,7 @@ def plot_value_comparison(min_value_over_gens1, min_value_over_gens2, seed):
 
 
 def plot_average_value_comparison(all_min_values1, all_min_values2):
-    """
-    2つのデータセットの平均値推移を1つのグラフに描画。
-    """
+
     # 平均値を計算
     average_values1 = np.mean(np.array(all_min_values1), axis=0)
     average_values2 = np.mean(np.array(all_min_values2), axis=0)
@@ -193,6 +193,7 @@ def plot_average_value_comparison(all_min_values1, all_min_values2):
     plt.xlabel('Generation')
     plt.ylabel('Average Minimum Evaluation Value')
     plt.title('Comparison of Average Value Over Generations')
+    plt.ylim(0, 50)  # 縦軸の範囲を設定
     plt.legend()
     plt.grid(True)
     plt.savefig('average_value_comparison_over_generations.png')  # 結合した平均値グラフを保存

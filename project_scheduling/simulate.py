@@ -45,6 +45,13 @@ def simulate_problem(problem_data, seed = None):
 
     # 最適化を実行し、コールバック関数を利用してデータ収集
     result3 = minimize(problem, algorithm, ('n_gen', 300), verbose=True, callback=record_min_value)
+    
+    with open(f"result_solve_problem3_seed_{seed}.txt", "w") as file:
+        file.write("Optimization Result for solve_problem:\n")
+        file.write(f"Best solution: {result3.X}\n")
+        file.write(f"Best objective value: {result3.F}\n")
+        file.write("\nMinimum values over generations:\n")
+        file.writelines([f"{value}\n" for value in min_value_over_gens3])
 
     return result3, min_value_over_gens3  # 最適化結果と最小評価値のリストを返す
 
@@ -77,5 +84,12 @@ def simulate_problem2(problem_data, seed = None):
 
     # 最適化を実行し、コールバック関数を利用してデータ収集
     result4 = minimize(problem, algorithm, ('n_gen', 300), verbose=True, callback=record_min_value)
+    
+    with open(f"result_solve_problem4_seed_{seed}.txt", "w") as file:
+        file.write("Optimization Result for solve_problem:\n")
+        file.write(f"Best solution: {result4.X}\n")
+        file.write(f"Best objective value: {result4.F}\n")
+        file.write("\nMinimum values over generations:\n")
+        file.writelines([f"{value}\n" for value in min_value_over_gens4])
 
     return result4, min_value_over_gens4  # 最適化結果と最小評価値のリストを返す

@@ -51,7 +51,7 @@ def main():
         
         # スケジュールをプロット
         print(f"Plotting schedule for seed {seed}...")
-        plot_schedule(result1, J, R, T, robot_types)  # 必要なデータを渡す
+        plot_schedule(result1, J, R, T, robot_types, seed)  # 必要なデータを渡す
 
         # 故障を考慮しない場合
         result2, min_value_over_gens2 = solve_problem2(problem_data, seed)
@@ -61,7 +61,7 @@ def main():
         
         # スケジュールをプロット
         print(f"Plotting schedule for seed {seed}...")
-        plot_schedule2(result2, J, R, T, robot_types)  # 必要なデータを渡す
+        plot_schedule2(result2, J, R, T, robot_types, seed)  # 必要なデータを渡す
 
         # 評価値推移をプロット
         print(f"Plotting value over generations for seed {seed}...")
@@ -96,11 +96,22 @@ def main():
 
     # 4通りの引き算
     print("Calculating final evaluation values...")
+    with_failure_vs_failure = averaged_results_stage1["with_failure"] - averaged_results_stage2["failure"]
+    with_failure_vs_no_failure = averaged_results_stage1["with_failure"] - averaged_results_stage2["no_failure"]
+    without_failure_vs_failure = averaged_results_stage1["without_failure"] - averaged_results_stage2["failure"]
+    without_failure_vs_no_failure = averaged_results_stage1["without_failure"] - averaged_results_stage2["no_failure"]
+
+    # 計算結果をprintで表示
+    print(f"with_failure - failure: {with_failure_vs_failure}")
+    print(f"with_failure - no_failure: {with_failure_vs_no_failure}")
+    print(f"without_failure - failure: {without_failure_vs_failure}")
+    print(f"without_failure - no_failure: {without_failure_vs_no_failure}")
+
     final_evaluation_values = {
-        "with_failure_vs_failure": averaged_results_stage1["with_failure"] - averaged_results_stage2["failure"],
-        "with_failure_vs_no_failure": averaged_results_stage1["with_failure"] - averaged_results_stage2["no_failure"],
-        "without_failure_vs_failure": averaged_results_stage1["without_failure"] - averaged_results_stage2["failure"],
-        "without_failure_vs_no_failure": averaged_results_stage1["without_failure"] - averaged_results_stage2["no_failure"],
+        "with_failure - failure": with_failure_vs_failure,
+        "with_failure - no_failure": with_failure_vs_no_failure,
+        "without_failure - failure": without_failure_vs_failure,
+        "without_failure - no_failure": without_failure_vs_no_failure,
     }
 
     # 結果をテキストファイルに保存
